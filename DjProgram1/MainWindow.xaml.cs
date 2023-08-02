@@ -17,6 +17,10 @@ using NAudio.Wave;
 
 using Path = System.IO.Path;
 using VisioForge.Libs.WindowsMediaLib;
+using NAudio.Gui;
+using System.Windows.Media.Animation;
+using System.Windows.Media.Media3D;
+using VisioForge.Libs.NAudio.VisioForge;
 
 namespace DjProgram1
 {
@@ -24,19 +28,27 @@ namespace DjProgram1
     public partial class MainWindow : Window
     {
         DjProgram1.Services.MusicService musicService = new DjProgram1.Services.MusicService(); 
+        DjProgram1.Services.TempoAnalyzer tempoAnalyzer = new DjProgram1.Services.TempoAnalyzer();
         List<DjProgram1.Data.AudioFile> audioFiles = new List<DjProgram1.Data.AudioFile>();
         DjProgram1.Data.AudioFile currentAudioFile1 = new DjProgram1.Data.AudioFile();
         DjProgram1.Data.AudioFile currentAudioFile2 = new DjProgram1.Data.AudioFile();
-        
+        DjProgram1.Services.RealtimeWaveformUpdater realtimeWaveformUpdater1;
+        DjProgram1.Services.RealtimeWaveformUpdater realtimeWaveformUpdater2;
+        AudioPlayer audioPlayer = new AudioPlayer();
+        private double lastAngle = 0;
+
+
         private NAudio.Wave.AudioFileReader audioFileReader1;
         private NAudio.Wave.AudioFileReader audioFileReader2;
         private NAudio.Wave.WaveOut waveOut1;
         private NAudio.Wave.WaveOut waveOut2;
         private int lastDeck = 2;
-
+        //DjProgram1.Services.BpmCalculator bpmCalculator = new DjProgram1.Services.BpmCalculator();
         public MainWindow()
         {
+
             InitializeComponent();
+            
             LoadView();
         }
 
@@ -64,14 +76,16 @@ namespace DjProgram1
                     {
                         currentAudioFile1 = audioFiles[selectedIndex];
                         songOnDeck1.Text = currentAudioFile1.FileName;
-                        bpmTextBox1.Text = "BPM: " + musicService.GetBpm(currentAudioFile1.FilePath).ToString();
+                        double[] audioSamples = musicService.LoadAudioSamples(currentAudioFile1.FilePath);
+                        musicService.GenerateWaveform(audioSamples, canvas1);
+                        bpmTextBox1.Text = "BPM: " ;
                         lastDeck = 1;
                     }
                     else
                     {
                         currentAudioFile2 = audioFiles[selectedIndex];
                         songOnDeck2.Text = currentAudioFile2.FileName;
-                        bpmTextBox2.Text = "BPM: " + musicService.GetBpm(currentAudioFile2.FilePath).ToString();
+                        bpmTextBox2.Text = "BPM: " ;
                         lastDeck = 2;
                     }
                     
@@ -86,6 +100,7 @@ namespace DjProgram1
             string[] files = Directory.GetFiles(folderPath)
                 .Where(file => file.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
                 .ToArray();
+
             foreach (string file in files)
             {
                 DjProgram1.Data.AudioFile audioFile = new DjProgram1.Data.AudioFile();
@@ -93,10 +108,21 @@ namespace DjProgram1
                 audioFile.FilePath = file;
                 audioFiles.Add(audioFile);
 
-                
+                if (audioFile.FileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Dodaj plik WAV do pojemnika odtwarzacza
+                    NAudio.Wave.WaveStream waveStream = new NAudio.Wave.WaveFileReader(audioFile.FilePath);
+                    audioPlayer.AddWaveStream(waveStream);
+                }
+                else if (audioFile.FileName.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Dodaj plik MP3 do pojemnika odtwarzacza
+                    Mp3FileReader mp3File = new Mp3FileReader(audioFile.FilePath);
+                    audioPlayer.AddMp3File(mp3File);
+                }
             }
-            
-            foreach(var file in audioFiles)
+
+            foreach (var file in audioFiles)
             {
                 listBox.Items.Add(file.FileName);
             }
@@ -113,6 +139,7 @@ namespace DjProgram1
                 waveOut1 = new NAudio.Wave.WaveOut();
                 waveOut1.Init(audioFileReader1);
                 waveOut1.Play();
+                animatePhoto(rotateTransform1);
             }
             else if (waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Paused)
             {
@@ -142,6 +169,7 @@ namespace DjProgram1
             if (waveOut1 != null && waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Playing)
             {
                 waveOut1.Pause();
+                StopRotation(rotateTransform1);
             }
         }
 
@@ -155,9 +183,56 @@ namespace DjProgram1
             }
         }
 
-        
+        private void stopButton1_Click(object sender, RoutedEventArgs e)
+        {
+            if (waveOut1 != null && waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Playing)
+            {
+                waveOut1.Stop();
+                waveOut1.Play();
+                waveOut1.Stop();
 
-        //przeorganizowac kod - zastanowić się jak najlepiej ma on byc
-        // 
+            }
+        }
+        private void stopButton2_Click(object sender, RoutedEventArgs e)
+        {
+            if (waveOut2 != null && waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Playing)
+            {
+                waveOut2.Stop();
+                waveOut2.Play();
+                waveOut2.Stop();
+
+            }
+        }
+
+        private void synchroButton1_Click(object sender, RoutedEventArgs e)
+        {
+            
+        }
+        private void synchroButton2_Click(object sender, RoutedEventArgs e)
+        {
+            
+        }
+
+        private void animatePhoto(RotateTransform rotateTransform)
+        {
+            DoubleAnimation animation = new DoubleAnimation();
+            animation.From = lastAngle;
+            animation.To = lastAngle + 360;
+            animation.Duration = TimeSpan.FromSeconds(5);
+            animation.RepeatBehavior = RepeatBehavior.Forever;
+
+            rotateTransform.BeginAnimation(RotateTransform.AngleProperty, animation);
+        }
+
+        private void StopRotation(RotateTransform rotateTransform)
+        {
+            lastAngle = rotateTransform.Angle;
+            rotateTransform.BeginAnimation(RotateTransform.AngleProperty, null);
+        }
+
+        // pobierac bpm z metadanych - lub ustawiac recznie
+        // zrobic tak zeby mozna bylo wgrac i mp3 i wava
+        // dodac dwa pokretla - jedno do ustawiania bpm drugie do przyspieszania - chyba to nie ma sensu? xd
+        // poprawić wyglad
     }
 }

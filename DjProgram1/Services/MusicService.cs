@@ -1,94 +1,84 @@
-﻿using NAudio.Wave;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VisioForge.MediaFramework.NAudio.VisioForge;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
-using SoundTouch;
+﻿using System;
 using System.Windows.Shapes;
 using System.Windows.Controls;
 using System.Windows.Media;
-using NAudio.SoundTouch;
-
+using NAudio.Wave;
+using SoundTouch;
+using System.Windows;
+using System.Collections.Generic;
+using System.Windows.Threading;
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace DjProgram1.Services
 {
     class MusicService
     {
-        public double GetBpm(string filePath)
+        private DispatcherTimer timer;
+        private int currentPosition; // Aktualna pozycja w próbkach audio
+
+        public void GenerateWaveform(double[] audioSamples, Canvas waveformCanvas)
         {
-            using (var audioFileReader = new NAudio.Wave.AudioFileReader(filePath))
+            waveformCanvas.Children.Clear();
+
+            double canvasWidth = waveformCanvas.Width;
+            double canvasHeight = waveformCanvas.Height;
+
+            int numSamples = audioSamples.Length;
+            int stepSize = (int)(numSamples / canvasWidth);
+
+            Polyline polyline = new Polyline();
+            polyline.Stroke = Brushes.Blue;
+            polyline.StrokeThickness = 1;
+
+            for (int i = 0; i < numSamples; i += stepSize)
             {
-                var soundTouch = new SoundTouch.BpmDetect(audioFileReader.WaveFormat.SampleRate, audioFileReader.WaveFormat.Channels);
+                double sample = audioSamples[i];
+                double x = i * (canvasWidth / numSamples);
+                double y = (sample + 1) * (canvasHeight / 2);
 
-                int blockSize = 8192;
-                var buffer = new float[blockSize];
-                int samplesRead;
-
-                do
-                {
-                    samplesRead = audioFileReader.Read(buffer, 0, blockSize);
-                    soundTouch.InputSamples(buffer, samplesRead);
-                    
-                } while (samplesRead > 0);
-
-                
-                double bpm = soundTouch.GetBpm();
-
-                return bpm;
+                polyline.Points.Add(new Point(x, y));
             }
+
+            waveformCanvas.Children.Add(polyline);
         }
 
-        public void createWaveform(Canvas canvas, string filePath)
+
+        public double[] LoadAudioSamples(string filePath)
         {
-            NAudio.Wave.WaveStream waveStream = new NAudio.Wave.WaveFileReader(filePath);
-            int sampleRate = waveStream.WaveFormat.SampleRate;
+            List<double> samples = new List<double>();
 
-            const int blockSize = 512; // Rozmiar bloku przetwarzania
-            int blockCount = (int)Math.Ceiling((double)waveStream.Length / blockSize);
-
-            // Inicjalizacja tablic przechowujących dane audio i wizualizację waveform
-            byte[] audioData = new byte[blockSize * blockCount];
-            float[] audioSamples = new float[audioData.Length / 2];
-            double canvasWidth = canvas.ActualWidth;
-            double canvasHeight = canvas.ActualHeight;
-            canvas.Children.Clear();
-
-            // Wczytanie i przetwarzanie danych audio blok po bloku
-            for (int blockIndex = 0; blockIndex < blockCount; blockIndex++)
+            using (var reader = new AudioFileReader(filePath))
             {
-                int bytesRead = waveStream.Read(audioData, blockIndex * blockSize, blockSize);
-                int sampleCount = bytesRead / 2;
+                var buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
+                int bytesRead;
 
-                for (int i = 0; i < sampleCount; i++)
+                while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    short sampleValue = BitConverter.ToInt16(audioData, (blockIndex * blockSize) + (i * 2));
-                    audioSamples[(blockIndex * sampleCount) + i] = sampleValue / 32768f;
-                }
-
-                // Generowanie wizualizacji waveform
-                for (int i = 0; i < audioSamples.Length; i++)
-                {
-                    double x = canvasWidth * i / audioSamples.Length;
-                    double y = canvasHeight * (1 - (audioSamples[i] + 1) / 2);
-                    Line line = new Line
+                    for (int i = 0; i < bytesRead / reader.WaveFormat.Channels; i++)
                     {
-                        X1 = x,
-                        Y1 = canvasHeight / 2,
-                        X2 = x,
-                        Y2 = y,
-                        Stroke = Brushes.Black
-                    };
-                    canvas.Children.Add(line);
+                        for (int channel = 0; channel < reader.WaveFormat.Channels; channel++)
+                        {
+                            samples.Add(buffer[i * reader.WaveFormat.Channels + channel]);
+                        }
+                    }
                 }
             }
 
-            // Zamknięcie strumienia audio
-            waveStream.Close();
+            return samples.ToArray();
         }
+
+        
+
+
     }
+        
 }
+//TODO
+// nie sprawdzac bpm
+// dodaj przycisk do synchronizacji
+// dodac analogowy suwak do synchronizacji
+// dodac geenrowanie prostego wave formu 
+// poprawic gui by bylo nowoczesne
+// bardzo wazne - zrobic tak zeby dzialalo dla wave i dla mp3
 
