@@ -41,7 +41,12 @@
         </Border>
         <!-- Panel przycisków -->
         <StackPanel Grid.Row="2">
-            <Button Margin="10,3,-500,0" Width="100" Click="buttonUpload_Click">
+            <Button Margin="10,3,400,0" Width="100" Click="buttonUpload1_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Wgraj" />
+                </StackPanel>
+            </Button>
+            <Button Margin="10,-17,-400,0" Width="100" Click="buttonUpload2_Click">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Wgraj" />
                 </StackPanel>

@@ -21,6 +21,7 @@ using NAudio.Gui;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
 using VisioForge.Libs.NAudio.VisioForge;
+using DjProgram1.Services;
 
 namespace DjProgram1
 {
@@ -28,13 +29,12 @@ namespace DjProgram1
     public partial class MainWindow : Window
     {
         DjProgram1.Services.MusicService musicService = new DjProgram1.Services.MusicService(); 
-        DjProgram1.Services.TempoAnalyzer tempoAnalyzer = new DjProgram1.Services.TempoAnalyzer();
         List<DjProgram1.Data.AudioFile> audioFiles = new List<DjProgram1.Data.AudioFile>();
         DjProgram1.Data.AudioFile currentAudioFile1 = new DjProgram1.Data.AudioFile();
         DjProgram1.Data.AudioFile currentAudioFile2 = new DjProgram1.Data.AudioFile();
         DjProgram1.Services.RealtimeWaveformUpdater realtimeWaveformUpdater1;
         DjProgram1.Services.RealtimeWaveformUpdater realtimeWaveformUpdater2;
-        AudioPlayer audioPlayer = new AudioPlayer();
+        AudioPlayerService audioPlayer = new AudioPlayerService();
         private double lastAngle = 0;
 
 
@@ -42,7 +42,11 @@ namespace DjProgram1
         private NAudio.Wave.AudioFileReader audioFileReader2;
         private NAudio.Wave.WaveOut waveOut1;
         private NAudio.Wave.WaveOut waveOut2;
+        bool waveOut1Playing = false;
+        bool waveOut2Playing = false;
         private int lastDeck = 2;
+
+        int selectedIndex;
         //DjProgram1.Services.BpmCalculator bpmCalculator = new DjProgram1.Services.BpmCalculator();
         public MainWindow()
         {
@@ -64,37 +68,69 @@ namespace DjProgram1
             e.Handled = true;
         }
 
-        private void buttonUpload_Click(object sender, RoutedEventArgs e)
+        private void buttonUpload2_Click(object sender, RoutedEventArgs e)
         {
-            int selectedIndex = songList.SelectedIndex;
+            selectedIndex = songList.SelectedIndex;
+            if (songList.SelectedItem != null)
+            {
+                if (selectedIndex >= 0 && selectedIndex < audioFiles.Count)
+                {
+
+                    if (currentAudioFile2 == audioFiles[selectedIndex])
+                    {
+                        return;
+                    }
+                    if (waveOut1Playing == true)
+                    {
+                        waveOut2.Stop();
+                        waveOut2Playing = false;
+                    }
+
+                    currentAudioFile2 = audioFiles[selectedIndex];
+                    songOnDeck2.Text = currentAudioFile1.FileName;
+                    double[] audioSamples = musicService.LoadAudioSamples(currentAudioFile1.FilePath);
+                    musicService.GenerateWaveform(audioSamples, canvas2);
+                    bpmTextBox1.Text = "BPM: ";
+                    lastDeck = 2;
+                }
+            }
+
+
+        }
+        private void buttonUpload1_Click(object sender, RoutedEventArgs e)
+        {
+            selectedIndex = songList.SelectedIndex;
             if (songList.SelectedItem != null)
             {
                 
                 if (selectedIndex >= 0 && selectedIndex < audioFiles.Count)
                 {
-                    if(lastDeck == 2)
+                    
+                    
+                    if(currentAudioFile1 == audioFiles[selectedIndex])
                     {
-                        currentAudioFile1 = audioFiles[selectedIndex];
-                        songOnDeck1.Text = currentAudioFile1.FileName;
-                        double[] audioSamples = musicService.LoadAudioSamples(currentAudioFile1.FilePath);
-                        musicService.GenerateWaveform(audioSamples, canvas1);
-                        bpmTextBox1.Text = "BPM: " ;
-                        lastDeck = 1;
+                        return;
                     }
-                    else
+                    if(waveOut1Playing == true)
                     {
-                        currentAudioFile2 = audioFiles[selectedIndex];
-                        songOnDeck2.Text = currentAudioFile2.FileName;
-                        bpmTextBox2.Text = "BPM: " ;
-                        lastDeck = 2;
+                        waveOut1.Stop();
+                        waveOut1Playing = false;
                     }
+                      
+                    currentAudioFile1 = audioFiles[selectedIndex];
+                    songOnDeck1.Text = currentAudioFile1.FileName;
+                    double[] audioSamples = musicService.LoadAudioSamples(currentAudioFile1.FilePath);
+                    musicService.GenerateWaveform(audioSamples, canvas1);
+                    bpmTextBox1.Text = "BPM: " ;
+                    lastDeck = 1;
+                    
                     
                 }
             }
         }
         private void buttonUploadFiles_Click(object sender, RoutedEventArgs e)
         {
-            ListBox listBox = songList; // Podmień 'yourListBoxName' na nazwę swojego ListBox
+            ListBox listBox = songList; 
 
             string folderPath = @"C:\Users\Janusz\Desktop\BazaPiosenek";
             string[] files = Directory.GetFiles(folderPath)
@@ -104,24 +140,13 @@ namespace DjProgram1
             foreach (string file in files)
             {
                 DjProgram1.Data.AudioFile audioFile = new DjProgram1.Data.AudioFile();
-                audioFile.FileName = Path.GetFileName(file); // Poprawne przypisanie wartości do właściwości FileName
+                audioFile.FileName = Path.GetFileName(file); 
                 audioFile.FilePath = file;
                 audioFiles.Add(audioFile);
-
-                if (audioFile.FileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Dodaj plik WAV do pojemnika odtwarzacza
-                    NAudio.Wave.WaveStream waveStream = new NAudio.Wave.WaveFileReader(audioFile.FilePath);
-                    audioPlayer.AddWaveStream(waveStream);
-                }
-                else if (audioFile.FileName.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Dodaj plik MP3 do pojemnika odtwarzacza
-                    Mp3FileReader mp3File = new Mp3FileReader(audioFile.FilePath);
-                    audioPlayer.AddMp3File(mp3File);
-                }
+                audioFileReader1 = new AudioFileReader(audioFile.FilePath);
+               
             }
-
+            
             foreach (var file in audioFiles)
             {
                 listBox.Items.Add(file.FileName);
@@ -133,17 +158,19 @@ namespace DjProgram1
         {
             if (waveOut1 == null)
             {
-                //musicService.createWaveform(canvas2, currentAudioFile2.FilePath);
 
                 audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
                 waveOut1 = new NAudio.Wave.WaveOut();
                 waveOut1.Init(audioFileReader1);
                 waveOut1.Play();
+                waveOut1Playing = true;
+
                 animatePhoto(rotateTransform1);
             }
             else if (waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Paused)
             {
                 waveOut1.Play();
+                waveOut1Playing = true;
             }
         }
 
@@ -157,10 +184,12 @@ namespace DjProgram1
                 waveOut2 = new NAudio.Wave.WaveOut();
                 waveOut2.Init(audioFileReader2);
                 waveOut2.Play();
+                waveOut2Playing = true;
             }
             else if (waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Paused)
             {
                 waveOut2.Play();
+                waveOut2Playing = true;
             }
         }
 
@@ -190,6 +219,7 @@ namespace DjProgram1
                 waveOut1.Stop();
                 waveOut1.Play();
                 waveOut1.Stop();
+                waveOut1Playing = false;
 
             }
         }
@@ -200,6 +230,7 @@ namespace DjProgram1
                 waveOut2.Stop();
                 waveOut2.Play();
                 waveOut2.Stop();
+                waveOut2Playing = false;
 
             }
         }
@@ -231,8 +262,14 @@ namespace DjProgram1
         }
 
         // pobierac bpm z metadanych - lub ustawiac recznie
-        // zrobic tak zeby mozna bylo wgrac i mp3 i wava
         // dodac dwa pokretla - jedno do ustawiania bpm drugie do przyspieszania - chyba to nie ma sensu? xd
         // poprawić wyglad
+        // 03.08 zrobic zeby mozna bylo odpalac mp3 i wave bez przeszkod
+        // Konsultacja: 04.08 10:00
+        // zrobic taka mala baze danych w pliku i pobierac te nuty z metadanych co sa i liczyc na watku dla innych
+        // zrobic na watkach 
+
+        // PO PRZERWIE:
+        // dodac upload na deck 1 i na deck drugi osobno
     }
 }

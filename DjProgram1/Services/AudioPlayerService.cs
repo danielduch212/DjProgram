@@ -9,13 +9,13 @@ namespace DjProgram1.Services
 {
     class AudioPlayerService
     {
-        private List<WaveStream> waveStreams;
-        private List<Mp3FileReader> mp3Files;
+        public List<WaveStream> waveStreams;
+        public List<Mp3FileReader> mp3Files;
 
-        public AudioPlayerService(List<WaveStream> waveStreams, List<Mp3FileReader> mp3Files)
+        public AudioPlayerService()
         {
-            this.waveStreams = waveStreams;
-            this.mp3Files = mp3Files;
+            waveStreams = new List<WaveStream>();
+            mp3Files = new List<Mp3FileReader>();
         }
         public void AddWaveStream(WaveStream waveStream)
         {
