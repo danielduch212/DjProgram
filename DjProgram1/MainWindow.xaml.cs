@@ -270,6 +270,6 @@ namespace DjProgram1
         // zrobic na watkach 
 
         // PO PRZERWIE:
-        // dodac upload na deck 1 i na deck drugi osobno
+        // 
     }
 }
