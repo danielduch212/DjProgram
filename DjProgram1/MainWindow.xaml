@@ -28,6 +28,12 @@
                     
                 </StackPanel>
             </Button>
+            <Button Margin="10,-20,-500,0" Width="100" Click="reset_Data_Base_click">
+                <StackPanel >
+                    <TextBlock Text="Reset Bazy" />
+
+                </StackPanel>
+            </Button>
         </StackPanel>
 
 
@@ -41,9 +47,14 @@
         </Border>
         <!-- Panel przycisków -->
         <StackPanel Grid.Row="2">
-            <Button Margin="10,3,400,0" Width="100" Click="buttonUpload1_Click">
+            <Button Margin="10,2,400,0" Width="100" Click="buttonUpload1_Click">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Wgraj" />
+                </StackPanel>
+            </Button>
+            <Button Margin="10,-17,0,0" Width="100" Click="prepare_track_click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Przygotuj" />
                 </StackPanel>
             </Button>
             <Button Margin="10,-17,-400,0" Width="100" Click="buttonUpload2_Click">

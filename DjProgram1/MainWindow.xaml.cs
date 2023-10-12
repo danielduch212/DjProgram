@@ -22,6 +22,8 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
 using VisioForge.Libs.NAudio.VisioForge;
 using DjProgram1.Services;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DjProgram1
 {
@@ -35,6 +37,7 @@ namespace DjProgram1
         DjProgram1.Services.RealtimeWaveformUpdater realtimeWaveformUpdater1;
         DjProgram1.Services.RealtimeWaveformUpdater realtimeWaveformUpdater2;
         AudioPlayerService audioPlayer = new AudioPlayerService();
+        FIleService FIleService = new FIleService();
         private double lastAngle = 0;
 
 
@@ -46,13 +49,29 @@ namespace DjProgram1
         bool waveOut2Playing = false;
         private int lastDeck = 2;
 
+        //watki
+        ThreadsService threadsService;
+        private Task audioLoadingTask1;
+        private CancellationTokenSource ctsAudioLoadingTask1;
+        private Task audioLoadingTask2;
+        private CancellationTokenSource ctsAudioLoadingTask2;
+
+        //private Task audioPlayingTask1;
+        //private CancellationTokenSource ctsAudioPlayingTask1;
+
+        //private Task audioPlayingTask2;
+        //private CancellationTokenSource ctsAudioPlayingTask2;
+
+
+
+
         int selectedIndex;
         //DjProgram1.Services.BpmCalculator bpmCalculator = new DjProgram1.Services.BpmCalculator();
         public MainWindow()
         {
 
             InitializeComponent();
-            
+            threadsService = new ThreadsService(musicService);
             LoadView();
         }
 
@@ -68,7 +87,7 @@ namespace DjProgram1
             e.Handled = true;
         }
 
-        private void buttonUpload2_Click(object sender, RoutedEventArgs e)
+        private async void buttonUpload2_Click(object sender, RoutedEventArgs e)
         {
             selectedIndex = songList.SelectedIndex;
             if (songList.SelectedItem != null)
@@ -80,24 +99,35 @@ namespace DjProgram1
                     {
                         return;
                     }
-                    if (waveOut1Playing == true)
+                    if (audioLoadingTask2 != null && !audioLoadingTask2.IsCompleted)
+                    {
+                        ctsAudioLoadingTask2.Cancel(); 
+                        waveOut2.Stop();
+                        await audioLoadingTask2; 
+                    }
+                    if (waveOut2Playing == true)
                     {
                         waveOut2.Stop();
                         waveOut2Playing = false;
                     }
-
+                    if(waveOut2 != null) 
+                        waveOut2.Stop();
                     currentAudioFile2 = audioFiles[selectedIndex];
-                    songOnDeck2.Text = currentAudioFile1.FileName;
-                    double[] audioSamples = musicService.LoadAudioSamples(currentAudioFile1.FilePath);
-                    musicService.GenerateWaveform(audioSamples, canvas2);
-                    bpmTextBox1.Text = "BPM: ";
-                    lastDeck = 2;
+                    songOnDeck2.Text = currentAudioFile2.FileName;
+                    //double[] audioSamples = musicService.LoadAudioSamples(currentAudioFile2.FilePath);
+                    //musicService.GenerateWaveform(audioSamples, canvas2);
+                    bpmTextBox2.Text = "BPM: ";
+                    //lastDeck = 2;
+                    ctsAudioLoadingTask2 = new CancellationTokenSource();
+                    audioLoadingTask2 = threadsService.LoadAudioAsync(currentAudioFile2.FilePath, ctsAudioLoadingTask2.Token);
+
+                    await audioLoadingTask2;
                 }
             }
 
 
         }
-        private void buttonUpload1_Click(object sender, RoutedEventArgs e)
+        private async void buttonUpload1_Click(object sender, RoutedEventArgs e)
         {
             selectedIndex = songList.SelectedIndex;
             if (songList.SelectedItem != null)
@@ -111,20 +141,33 @@ namespace DjProgram1
                     {
                         return;
                     }
-                    if(waveOut1Playing == true)
+                    if (audioLoadingTask1 != null && !audioLoadingTask1.IsCompleted)
                     {
+                        ctsAudioLoadingTask1.Cancel();
+                        waveOut1.Stop();
+                        await audioLoadingTask1; // Poczekaj na zakończenie
+                    }
+                    if (waveOut1Playing == true)
+                    {
+                        
                         waveOut1.Stop();
                         waveOut1Playing = false;
                     }
-                      
+                    
+                    if(waveOut1 != null)
+                        waveOut1.Stop();
                     currentAudioFile1 = audioFiles[selectedIndex];
                     songOnDeck1.Text = currentAudioFile1.FileName;
-                    double[] audioSamples = musicService.LoadAudioSamples(currentAudioFile1.FilePath);
-                    musicService.GenerateWaveform(audioSamples, canvas1);
-                    bpmTextBox1.Text = "BPM: " ;
-                    lastDeck = 1;
-                    
-                    
+                    //double[] audioSamples = musicService.LoadAudioSamples(currentAudioFile1.FilePath);
+                    //musicService.GenerateWaveform(audioSamples, canvas1);
+                    bpmTextBox1.Text = "BPM: ";
+                    //lastDeck = 1;
+                    ctsAudioLoadingTask1 = new CancellationTokenSource();
+                    audioLoadingTask1 = threadsService.LoadAudioAsync(currentAudioFile1.FilePath, ctsAudioLoadingTask1.Token);
+
+                    await audioLoadingTask1;
+
+
                 }
             }
         }
@@ -151,10 +194,18 @@ namespace DjProgram1
             {
                 listBox.Items.Add(file.FileName);
             }
+            FIleService.createFile();
+        }
+        private void prepare_track_click(object sender, RoutedEventArgs e)
+        {
+
         }
 
-        
-        private void playButton1_Click(object sender, RoutedEventArgs e)
+        private void reset_Data_Base_click(object sender, RoutedEventArgs e)
+        {
+
+        }
+        private async void playButton1_Click(object sender, RoutedEventArgs e)
         {
             if (waveOut1 == null)
             {
@@ -162,33 +213,37 @@ namespace DjProgram1
                 audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
                 waveOut1 = new NAudio.Wave.WaveOut();
                 waveOut1.Init(audioFileReader1);
-                waveOut1.Play();
-                waveOut1Playing = true;
 
-                animatePhoto(rotateTransform1);
+                waveOut1Playing = true;
+                waveOut1.Play();
+                //musicService.animatePhoto(rotateTransform1, lastAngle);
             }
             else if (waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Paused)
             {
                 waveOut1.Play();
+                
                 waveOut1Playing = true;
             }
         }
 
-        private void playButton2_Click(object sender, RoutedEventArgs e)
+        private async void playButton2_Click(object sender, RoutedEventArgs e)
         {
             if (waveOut2 == null)
             {
-                //musicService.createWaveform(canvas2, currentAudioFile2.FilePath);
-
                 audioFileReader2 = new NAudio.Wave.AudioFileReader(currentAudioFile2.FilePath);
                 waveOut2 = new NAudio.Wave.WaveOut();
                 waveOut2.Init(audioFileReader2);
                 waveOut2.Play();
+
+                //await audioPlayingTask2;
+
                 waveOut2Playing = true;
             }
-            else if (waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Paused)
+            else if (waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Paused)
             {
+
                 waveOut2.Play();
+                //await audioPlayingTask2;
                 waveOut2Playing = true;
             }
         }
@@ -197,8 +252,10 @@ namespace DjProgram1
         {
             if (waveOut1 != null && waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Playing)
             {
+
                 waveOut1.Pause();
-                StopRotation(rotateTransform1);
+                //musicService.StopRotation(rotateTransform1, lastAngle);
+                waveOut1Playing = false;
             }
         }
 
@@ -206,9 +263,10 @@ namespace DjProgram1
         {
             if (waveOut2 != null && waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Playing)
             {
-                waveOut2.Stop();
-                waveOut2.Dispose();
-                
+
+                waveOut2.Pause();
+                //musicService.StopRotation(rotateTransform2, lastAngle);
+                waveOut2Playing = false;
             }
         }
 
@@ -216,9 +274,9 @@ namespace DjProgram1
         {
             if (waveOut1 != null && waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Playing)
             {
+                
                 waveOut1.Stop();
-                waveOut1.Play();
-                waveOut1.Stop();
+                
                 waveOut1Playing = false;
 
             }
@@ -227,9 +285,9 @@ namespace DjProgram1
         {
             if (waveOut2 != null && waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Playing)
             {
+                
                 waveOut2.Stop();
-                waveOut2.Play();
-                waveOut2.Stop();
+                
                 waveOut2Playing = false;
 
             }
@@ -244,22 +302,7 @@ namespace DjProgram1
             
         }
 
-        private void animatePhoto(RotateTransform rotateTransform)
-        {
-            DoubleAnimation animation = new DoubleAnimation();
-            animation.From = lastAngle;
-            animation.To = lastAngle + 360;
-            animation.Duration = TimeSpan.FromSeconds(5);
-            animation.RepeatBehavior = RepeatBehavior.Forever;
-
-            rotateTransform.BeginAnimation(RotateTransform.AngleProperty, animation);
-        }
-
-        private void StopRotation(RotateTransform rotateTransform)
-        {
-            lastAngle = rotateTransform.Angle;
-            rotateTransform.BeginAnimation(RotateTransform.AngleProperty, null);
-        }
+        
 
         // pobierac bpm z metadanych - lub ustawiac recznie
         // dodac dwa pokretla - jedno do ustawiania bpm drugie do przyspieszania - chyba to nie ma sensu? xd
@@ -270,6 +313,8 @@ namespace DjProgram1
         // zrobic na watkach 
 
         // PO PRZERWIE:
-        // 
+        // nowy pomysl: dodanie przycisku zeby dj mogl se przygotowac kilka plikow podczas odtwarzania czegos : 
+        // zaznacza kilka plikow i daje policz przygotuj - wtedy watek sie odpala i liczy te bpm 
+        // te metadane tez mozna zrobic wiadomo
     }
 }
