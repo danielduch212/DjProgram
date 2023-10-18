@@ -14,6 +14,9 @@ using NAudio.Wave.SampleProviders;
 using TagLib;
 using System.Windows.Media.Animation;
 
+
+
+
 namespace DjProgram1.Services
 {
     public class MusicService
@@ -21,30 +24,53 @@ namespace DjProgram1.Services
         private DispatcherTimer timer;
         private int currentPosition; // Aktualna pozycja w próbkach audio
         List<DjProgram1.Data.AudioFile> audioFiles;
-        public void GenerateWaveform(double[] audioSamples, Canvas waveformCanvas)
+        public void GenerateWaveform(string filePath, Canvas waveformCanvas)
         {
-            waveformCanvas.Children.Clear();
+            List<double> audioSamples = new List<double>();
 
-            double canvasWidth = waveformCanvas.Width;
-            double canvasHeight = waveformCanvas.Height;
-
-            int numSamples = audioSamples.Length;
-            int stepSize = (int)(numSamples / canvasWidth);
-
-            Polyline polyline = new Polyline();
-            polyline.Stroke = Brushes.Blue;
-            polyline.StrokeThickness = 1;
-
-            for (int i = 0; i < numSamples; i += stepSize)
+            using (var reader = new AudioFileReader(filePath))
             {
-                double sample = audioSamples[i];
-                double x = i * (canvasWidth / numSamples);
-                double y = (sample + 1) * (canvasHeight / 2);
+                var buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
+                int bytesRead;
 
-                polyline.Points.Add(new Point(x, y));
+                while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    for (int i = 0; i < bytesRead / reader.WaveFormat.Channels; i++)
+                    {
+                        for (int channel = 0; channel < reader.WaveFormat.Channels; channel++)
+                        {
+                            audioSamples.Add(buffer[i * reader.WaveFormat.Channels + channel]);
+                        }
+                    }
+                }
             }
+            //audioSamples.ToArray();
 
-            waveformCanvas.Children.Add(polyline);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                waveformCanvas.Children.Clear();
+
+                double canvasWidth = waveformCanvas.ActualWidth; // Użyj ActualWidth i ActualHeight
+                double canvasHeight = waveformCanvas.ActualHeight;
+
+                int numSamples = audioSamples.Count;
+                int stepSize = (int)(numSamples / canvasWidth);
+
+                Polyline polyline = new Polyline();
+                polyline.Stroke = Brushes.Blue;
+                polyline.StrokeThickness = 1;
+
+                for (int i = 0; i < numSamples; i += stepSize)
+                {
+                    double sample = audioSamples[i];
+                    double x = i * (canvasWidth / numSamples);
+                    double y = (sample + 1) * (canvasHeight / 2);
+
+                    polyline.Points.Add(new Point(x, y));
+                }
+
+                waveformCanvas.Children.Add(polyline);
+            });
         }
 
 
