@@ -91,7 +91,7 @@
                 <Button Width="75" Height="50" Margin="240,-50,0,0" HorizontalAlignment="Center" Click="synchroButton1_Click" Background="White">
                     <TextBlock Text="SYNCHRO" />
                 </Button>
-                <Slider x:Name="volumeSlider1" Width="18" Height="150" Margin="-300,-300,0,0" Orientation="Vertical">
+                <Slider x:Name="volumeSlider1" Width="18" Height="150" Margin="-300,-300,0,0" Orientation="Vertical" Value="100" ValueChanged="volumeSlider1_ValueChanged">
                     <Slider.Resources>
                         <Style TargetType="Slider">
                             <Setter Property="Minimum" Value="0" />
@@ -100,7 +100,7 @@
                     </Slider.Resources>
                 </Slider>
                 <TextBlock Name="actualTime1" Width="50" Height="50" Margin="-320,100,0,0"  />
-                <Canvas Name="canvas1" Width="250" Height="100" Background="White" Margin="0,-125,0,0"/>
+                <Canvas Name="canvas1" Width="250" Height="100" Background="White" Margin="0,-125,0,0" />
                 <TextBlock Name="durationTime1" Width="50" Height="50" Margin="320,-50,0,0"/>
 
                 <!-- Dodaj swoje pozostałe elementy -->
@@ -127,7 +127,7 @@
                 <Button Width="75" Height="50" Margin="260,-50,0,0" HorizontalAlignment="Center" Click="synchroButton2_Click" Background="White">
                     <TextBlock Text="SYNCHRO" />
                 </Button>
-                <Slider x:Name="volumeSlider2" Width="18" Height="150" Margin="300,-300,0,0" Orientation="Vertical">
+                <Slider x:Name="volumeSlider2" Width="18" Height="150" Margin="300,-300,0,0" Orientation="Vertical" ValueChanged="volumeSlider2_ValueChanged">
                     <Slider.Resources>
                         <Style TargetType="Slider">
                             <Setter Property="Minimum" Value="0" />

@@ -12,16 +12,23 @@ using NAudio.Wave.SampleProviders;
 using System.Windows.Media.Animation;
 using TagLib;
 using System.Windows;
+using DjProgram1.Data;
+using Python.Runtime;
 
 namespace DjProgram1.Services
 {
     public class ThreadsService
     {
         public MusicService musicService;
-        public ThreadsService(MusicService musicService)
+        public FIleService fileService;
+        private double bpm;
+
+        public ThreadsService(MusicService musicService, FIleService fileService)
         {
             this.musicService = musicService;
+            this.fileService = fileService;
         }
+
         public async Task LoadAudioAsync(string filePath, CancellationToken cancellationToken)
         {
             // Wykonaj operację ładowania audio w tle
@@ -79,7 +86,13 @@ namespace DjProgram1.Services
             {
                 var audioPlayer = new AudioFileReader(audioFilePath);
                 double audioDuration = audioPlayer.TotalTime.TotalSeconds;
-                durationTime.Text = audioDuration.ToString(@"mm\:ss");
+
+                TimeSpan audioDurationTimeSpan = TimeSpan.FromSeconds(audioDuration);
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    durationTime.Text = audioDurationTimeSpan.ToString(@"mm\:ss");
+                });
                 await Task.Run(() =>
                 {
                     double canvasWidth = waveformCanvas.ActualWidth;
@@ -129,22 +142,25 @@ namespace DjProgram1.Services
                         {
                             break;
                         }
-                        if(cancellationToken.IsCancellationRequested == false)
+                        if (cancellationToken.IsCancellationRequested == false)
                         {
                             xPosition += xStep;
                         }
-                        
+
                         Thread.Sleep((int)delay);
 
-                        if(cancellationToken.IsCancellationRequested == false)
+                        if (cancellationToken.IsCancellationRequested == false)
                         {
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 positionLine.X1 = xPosition;
                                 positionLine.X2 = xPosition;
+
+                                // Obliczanie aktualnej pozycji czasowej w utworze
+                                double currentTime = (xPosition / canvasWidth) * audioDuration;
+                                actualTime.Text = TimeSpan.FromSeconds(currentTime).ToString(@"mm\:ss");
                             });
                         }
-                        
                     }
                 });
             }
@@ -152,6 +168,51 @@ namespace DjProgram1.Services
             {
                 // Handle cancellation
             }
+        }
+
+        public async Task CountBPM(string filePath,TextBlock textBlock, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    var result = musicService.calculateBPMPython(filePath);
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        textBlock.Text = "BPM: " + result;
+                    });
+                    
+                });
+
+
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
+        }
+
+        public async Task GenerateDataBase(AudioFile[] audioFiles, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+
+                    fileService.checkSongsMetaData(audioFiles);
+                }, cancellationToken);
+
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
+        }
+
+        public void InitializePython()
+        {
+            Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
+            PythonEngine.Initialize();
         }
 
     }

@@ -13,6 +13,13 @@ using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using TagLib;
 using System.Windows.Media.Animation;
+using Un4seen.Bass;
+using Un4seen.Bass.AddOn.Fx;
+using System.Linq;
+using Python.Runtime;
+
+
+
 
 
 
@@ -100,146 +107,7 @@ namespace DjProgram1.Services
 
 
         
-        //liczenie bpm
-        public double GetTempo(double[] audioSamples, double sampleRate)
-        {
-            int windowSize = 1024; // Rozmiar okna analizy
-            int hopSize = 512; // Przesunięcie okna
-
-            double[] autocorrelation = ComputeAutocorrelation(audioSamples, windowSize, hopSize);
-
-            int peakIndex = FindPeakIndex(autocorrelation, sampleRate);
-
-            double tempo = 60.0 / (peakIndex / sampleRate);
-
-            return tempo;
-        }
-
-        private double[] ComputeAutocorrelation(double[] samples, int windowSize, int hopSize)
-        {
-            int numWindows = (samples.Length - windowSize) / hopSize + 1;
-            double[] autocorrelation = new double[numWindows];
-
-            for (int i = 0; i < numWindows; i++)
-            {
-                double[] window = new double[windowSize];
-                Array.Copy(samples, i * hopSize, window, 0, windowSize);
-
-                autocorrelation[i] = ComputeAutocorrelationValue(window);
-            }
-
-            return autocorrelation;
-        }
-
-        private double ComputeAutocorrelationValue(double[] window)
-        {
-            int windowSize = window.Length;
-            double sum = 0.0;
-
-            for (int lag = 0; lag < windowSize; lag++)
-            {
-                for (int i = 0; i < windowSize - lag; i++)
-                {
-                    sum += window[i] * window[i + lag];
-                }
-            }
-
-            return sum;
-        }
-
-        private int FindPeakIndex(double[] autocorrelation, double sampleRate)
-        {
-            double maxAutocorrelation = 0.0;
-            int peakIndex = 0;
-
-            for (int i = 0; i < autocorrelation.Length; i++)
-            {
-                if (autocorrelation[i] > maxAutocorrelation)
-                {
-                    maxAutocorrelation = autocorrelation[i];
-                    peakIndex = i;
-                }
-            }
-
-            return peakIndex;
-        }
-        public double GetTempoFromWavFile(string filePath)
-        {
-            // Otwieranie pliku WAV
-            using (var waveStream = new WaveFileReader(filePath))
-            {
-                int sampleRate = waveStream.WaveFormat.SampleRate;
-                int desiredDurationInSeconds = 30; // Pożądana długość próbki w sekundach
-
-                // Obliczanie liczby próbek na podstawie pożądanej długości próbki
-                int numSamples = sampleRate * desiredDurationInSeconds;
-
-                // Przesunięcie początkowe w sekundach
-                int startPositionInSeconds = (int)(waveStream.TotalTime.TotalSeconds / 2 - desiredDurationInSeconds / 2);
-
-                // Przesunięcie początkowe w próbkach
-                int startPosition = sampleRate * startPositionInSeconds;
-
-                // Utworzenie bufora na próbki
-                double[] audioSamples = new double[numSamples];
-
-                // Przesunięcie odczytu do pozycji początkowej
-                waveStream.Position = startPosition * 2;
-
-                // Odczyt próbek audio
-                var buffer = new byte[numSamples * 2];
-                int bytesRead = waveStream.Read(buffer, 0, numSamples * 2);
-
-                // Konwersja bajtów na wartości audio
-                for (int i = 0; i < bytesRead; i += 2)
-                {
-                    short sample = (short)((buffer[i + 1] << 8) | buffer[i]);
-                    audioSamples[i / 2] = sample / 32768.0; // Normalizacja wartości audio do zakresu [-1, 1]
-                }
-
-                // Obliczanie tempa
-                return GetTempo(audioSamples, sampleRate);
-            }
-        }
-
-        public double GetTempoFromMp3File(string filePath)
-        {
-            // Otwieranie pliku WAV
-            using (var waveStream = new WaveFileReader(filePath))
-            {
-                int sampleRate = waveStream.WaveFormat.SampleRate;
-                int desiredDurationInSeconds = 30; // Pożądana długość próbki w sekundach
-
-                // Obliczanie liczby próbek na podstawie pożądanej długości próbki
-                int numSamples = sampleRate * desiredDurationInSeconds;
-
-                // Przesunięcie początkowe w sekundach
-                int startPositionInSeconds = (int)(waveStream.TotalTime.TotalSeconds / 2 - desiredDurationInSeconds / 2);
-
-                // Przesunięcie początkowe w próbkach
-                int startPosition = sampleRate * startPositionInSeconds;
-
-                // Utworzenie bufora na próbki
-                double[] audioSamples = new double[numSamples];
-
-                // Przesunięcie odczytu do pozycji początkowej
-                waveStream.Position = startPosition * 2;
-
-                // Odczyt próbek audio
-                var buffer = new byte[numSamples * 2];
-                int bytesRead = waveStream.Read(buffer, 0, numSamples * 2);
-
-                // Konwersja bajtów na wartości audio
-                for (int i = 0; i < bytesRead; i += 2)
-                {
-                    short sample = (short)((buffer[i + 1] << 8) | buffer[i]);
-                    audioSamples[i / 2] = sample / 32768.0; // Normalizacja wartości audio do zakresu [-1, 1]
-                }
-
-                // Obliczanie tempa
-                return GetTempo(audioSamples, sampleRate);
-            }
-        }
+       
 
         public void animatePhoto(RotateTransform rotateTransform, double lastAngle)
         {
@@ -257,11 +125,193 @@ namespace DjProgram1.Services
             lastAngle = rotateTransform.Angle;
             rotateTransform.BeginAnimation(RotateTransform.AngleProperty, null);
         }
+
+        //ulepszone liczenie bpm
+
+        private const int MinBpm = 50;
+        private const int MaxBpm = 200;
+
+        public double GetTempoFromWavFile(string filePath)
+        {
+            using (var waveStream = new WaveFileReader(filePath))
+            {
+                int sampleRate = waveStream.WaveFormat.SampleRate;
+                double[] audioSamples = ExtractAudioSamples(waveStream);
+
+                double[] windowedSamples = ApplyHanningWindow(audioSamples);
+
+                double[] autocorrelation = ComputeAutocorrelation(windowedSamples);
+
+                List<int> peakIndices = FindPeakIndices(autocorrelation);
+
+                double bpm = peakIndices.Select(index => 60.0 * sampleRate / index).Where(bpm => bpm >= MinBpm && bpm <= MaxBpm).FirstOrDefault();
+
+                return bpm;
+            }
+        }
+
+        private double[] ApplyHanningWindow(double[] samples)
+        {
+            int n = samples.Length;
+            double[] windowedSamples = new double[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                windowedSamples[i] = samples[i] * (0.5 - 0.5 * Math.Cos(2 * Math.PI * i / (n - 1)));
+            }
+
+            return windowedSamples;
+        }
+
+
+        private double[] ExtractAudioSamples(WaveStream waveStream)
+        {
+            int bytesPerSample = waveStream.WaveFormat.BitsPerSample / 8;
+            int numChannels = waveStream.WaveFormat.Channels;
+
+            // Liczba bajtów na komplet próbek (wszystkie kanały)
+            int bytesPerCompleteSample = bytesPerSample * numChannels;
+
+            int totalSamples = (int)(waveStream.Length / bytesPerCompleteSample);
+            double[] audioSamples = new double[totalSamples];
+            byte[] buffer = new byte[bytesPerCompleteSample];
+
+            for (int i = 0; i < totalSamples; i++)
+            {
+                waveStream.Read(buffer, 0, bytesPerCompleteSample);
+
+                audioSamples[i] = BitConverter.ToInt16(buffer, 0) / 32768.0;
+            }
+
+            return audioSamples;
+        }
+
+        private double[] ComputeAutocorrelation(double[] samples)
+        {
+            int n = samples.Length;
+            double[] result = new double[n];
+
+            for (int lag = 0; lag < n; lag++)
+            {
+                for (int i = 0; i < n - lag; i++)
+                {
+                    result[lag] += samples[i] * samples[i + lag];
+                }
+            }
+
+            return result;
+        }
+
+        private List<int> FindPeakIndices(double[] autocorrelation)
+        {
+            List<int> peakIndices = new List<int>();
+            for (int i = 1; i < autocorrelation.Length - 1; i++)
+            {
+                if (autocorrelation[i] > autocorrelation[i - 1] && autocorrelation[i] > autocorrelation[i + 1])
+                {
+                    // Interpolacja
+                    double alpha = autocorrelation[i - 1];
+                    double beta = autocorrelation[i];
+                    double gamma = autocorrelation[i + 1];
+                    double interpolatedIndex = i + 0.5 * (alpha - gamma) / (alpha - 2 * beta + gamma);
+                    peakIndices.Add((int)Math.Round(interpolatedIndex));
+                }
+            }
+
+            return peakIndices;
+        }
+
+
+
+
+        public string calculateBPMPython1(string filePath)
+        {
+            double bpm = 0;
+
+            try
+            {
+                Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
+
+                PythonEngine.Initialize();
+                using (Py.GIL()) // acquire the Python GIL (Global Interpreter Lock)
+                {
+                    dynamic librosa = Py.Import("librosa");
+                    dynamic beat = Py.Import("librosa.beat");
+
+                    // Load the audio file
+                    PyObject[] loadArgs = { new PyString(filePath) };
+                    using (var loadKwargs = new PyDict())
+                    {
+                        loadKwargs["sr"] = new PyInt(22050); // sample rate
+                        using (PyObject y_sr = librosa.InvokeMethod("load", loadArgs, loadKwargs))
+                        {
+                            PyObject y = y_sr[0];
+                            PyObject sr = y_sr[1];
+
+                            // Call the beat_track function
+                            PyObject[] beatTrackArgs = new PyObject[] { y, sr };
+                            PyObject tempo_beats = beat.GetAttr("beat_track").Invoke(beatTrackArgs);
+                            PyObject tempo = tempo_beats[0];
+                            bpm = tempo.As<double>();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string message = "An error occurred: " + ex.Message;
+                return message;
+            }
+            finally
+            {
+                PythonEngine.Shutdown();
+            }
+
+            return bpm.ToString();
+        }
+
+        public string calculateBPMPython(string filePath)
+        {
+            string result = "";
+            
+            
+            
+            Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
+
+            PythonEngine.Initialize();
+            
+            
+            using (Py.GIL())
+            {
+                try
+                {
+                    dynamic sys = Py.Import("sys");
+                    sys.path.append(@"C:\Users\Janusz\source\repos\DjProgram1\DjProgram1\Services");
+                    dynamic pythonScript = Py.Import("pythonApp");
+                    
+                    dynamic bpm = pythonScript.calculate_bpm(filePath);
+                    result = bpm.ToString();
+                }
+                catch (Exception ex)
+                {
+                    result = "An error occurred: " + ex.Message;
+                }
+            }
+            PythonEngine.Shutdown();
+            return result;
+        }
+
+
     }
 
-    
-        
+
+
+
 }
+
+
+
+
 //TODO
 // nie sprawdzac bpm
 // dodaj przycisk do synchronizacji

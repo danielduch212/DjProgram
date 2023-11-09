@@ -12,5 +12,6 @@ namespace DjProgram1.Data
     {
         public string FileName { get; set; }
         public string FilePath { get; set; }
+        public double? BPM { get; set; }
     }
 }
