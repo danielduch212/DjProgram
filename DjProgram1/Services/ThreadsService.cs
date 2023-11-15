@@ -27,7 +27,11 @@ namespace DjProgram1.Services
         {
             this.musicService = musicService;
             this.fileService = fileService;
+            
+            
         }
+        
+
 
         public async Task LoadAudioAsync(string filePath, CancellationToken cancellationToken)
         {
@@ -170,7 +174,7 @@ namespace DjProgram1.Services
             }
         }
 
-        public async Task CountBPM(string filePath,TextBlock textBlock, CancellationToken cancellationToken)
+        public async Task CountBPM(string filePath,System.Windows.Controls.TextBox textBox, CancellationToken cancellationToken)
         {
             try
             {
@@ -179,7 +183,7 @@ namespace DjProgram1.Services
                     var result = musicService.calculateBPMPython(filePath);
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        textBlock.Text = "BPM: " + result;
+                        textBox.Text = "BPM: " + result;
                     });
                     
                 });
@@ -209,11 +213,32 @@ namespace DjProgram1.Services
             }
         }
 
-        public void InitializePython()
+        public async Task<string> changeBPM(string filePath, double originalBPM, double newBPM, CancellationToken cancellationToken)
         {
-            Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
-            PythonEngine.Initialize();
+            string newFilePath = "";
+            try
+            {
+               
+                await Task.Run(() =>
+                {
+
+
+                    newFilePath = musicService.changeBPM(filePath, originalBPM, newBPM);
+                    return newFilePath;
+
+
+
+                });
+
+
+            }
+            catch (OperationCanceledException)
+            {
+                return newFilePath = null;
+            }
+            return newFilePath;
         }
+
 
     }
 }

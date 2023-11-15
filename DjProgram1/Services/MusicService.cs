@@ -31,6 +31,24 @@ namespace DjProgram1.Services
         private DispatcherTimer timer;
         private int currentPosition; // Aktualna pozycja w próbkach audio
         List<DjProgram1.Data.AudioFile> audioFiles;
+
+        ~MusicService()
+        {
+            try
+            {
+                var directory = new DirectoryInfo(@"C:\Users\Janusz\source\repos\DjProgram1\DjProgram1\songCopies");
+
+                foreach (FileInfo file in directory.GetFiles())
+                {
+                    file.Delete();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                
+            }
+        }
         public void GenerateWaveform(string filePath, Canvas waveformCanvas)
         {
             List<double> audioSamples = new List<double>();
@@ -106,24 +124,27 @@ namespace DjProgram1.Services
         }
 
 
-        
-       
 
-        public void animatePhoto(RotateTransform rotateTransform, double lastAngle)
+
+
+        public void animatePhoto(RotateTransform rotateTransform)
         {
+            
+
             DoubleAnimation animation = new DoubleAnimation();
-            animation.From = lastAngle;
-            animation.To = lastAngle + 360;
+            animation.From = 0;
+            animation.To = 360;
             animation.Duration = TimeSpan.FromSeconds(5);
             animation.RepeatBehavior = RepeatBehavior.Forever;
 
+            
             rotateTransform.BeginAnimation(RotateTransform.AngleProperty, animation);
         }
 
-        public void StopRotation(RotateTransform rotateTransform, double lastAngle)
+        public void StopRotation(RotateTransform rotateTransform)
         {
-            lastAngle = rotateTransform.Angle;
-            rotateTransform.BeginAnimation(RotateTransform.AngleProperty, null);
+            rotateTransform.BeginAnimation(RotateTransform.AngleProperty, null); 
+            rotateTransform.Angle = 10; 
         }
 
         //ulepszone liczenie bpm
@@ -273,10 +294,12 @@ namespace DjProgram1.Services
         public string calculateBPMPython(string filePath)
         {
             string result = "";
-            
-            
-            
+
             Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
+
+            PythonEngine.Initialize();
+
+            
 
             PythonEngine.Initialize();
             
@@ -288,9 +311,11 @@ namespace DjProgram1.Services
                     dynamic sys = Py.Import("sys");
                     sys.path.append(@"C:\Users\Janusz\source\repos\DjProgram1\DjProgram1\Services");
                     dynamic pythonScript = Py.Import("pythonApp");
-                    
                     dynamic bpm = pythonScript.calculate_bpm(filePath);
-                    result = bpm.ToString();
+
+                    double bpmRounded = Math.Round((double)bpm, 2); 
+                    result = bpmRounded.ToString();
+                    
                 }
                 catch (Exception ex)
                 {
@@ -301,6 +326,56 @@ namespace DjProgram1.Services
             return result;
         }
 
+
+        public string changeBPM(string filePath, double oldBPM, double newBPM)
+        {
+
+
+            string newFilePath="";
+
+            Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
+
+            PythonEngine.Initialize();
+
+
+            using (Py.GIL())
+            {
+                try
+                {
+                    dynamic sys = Py.Import("sys");
+                    sys.path.append(@"C:\Users\Janusz\source\repos\DjProgram1\DjProgram1\Services");
+                    dynamic pythonScript = Py.Import("pythonApp");
+                    newFilePath = pythonScript.change_bpm(filePath, oldBPM, newBPM);
+                    
+                    
+                    
+
+                }
+                catch (Exception ex)
+                {
+                    newFilePath = "An error occurred: " + ex.Message;
+                }
+            }
+            PythonEngine.Shutdown();
+            return newFilePath;
+        }
+
+        public double ChangeBPM(double angleDelta, string BPM)
+        {
+            int change = (int)Math.Round(angleDelta / 10); 
+            double newBPM = double.Parse(BPM);
+
+            if (angleDelta > 0)
+            {
+                newBPM += change;
+            }
+            else if (angleDelta < 0)
+            {
+                newBPM -= change;
+                newBPM = Math.Max(0, newBPM); 
+            }
+            return newBPM;
+        }
 
     }
 

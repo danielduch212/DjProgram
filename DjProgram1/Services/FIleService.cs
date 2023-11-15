@@ -33,7 +33,7 @@ namespace DjProgram1.Services
                 {
                     StreamWriter writer = System.IO.File.CreateText(filePath);
                 }
-                // Utwórz nowy plik tekstowy
+                
                 
             }
             catch (Exception ex)
