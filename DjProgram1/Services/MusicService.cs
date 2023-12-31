@@ -28,8 +28,8 @@ namespace DjProgram1.Services
         private DispatcherTimer timer;
         private int currentPosition; // Aktualna pozycja w próbkach audio
         List<DjProgram1.Data.AudioFile> audioFiles;
-        private Rectangle progressIndicator1;
-        private Rectangle progressIndicator2;
+        public Rectangle progressIndicator1;
+        public Rectangle progressIndicator2;
         private AudioFileReader reader1;
         private AudioFileReader reader2;
         private TextBlock actualTime1;
@@ -63,10 +63,8 @@ namespace DjProgram1.Services
             List<double> audioSamples = new List<double>();
             using (var reader = new AudioFileReader(filePath))
             {
-                // Całkowita liczba sekund utworu
                 double totalSeconds = reader.TotalTime.TotalSeconds;
 
-                // Interwał próbkowania - przyjmujemy, że chcemy próbkować co 500 ms (pół sekundy)
                 int sampleInterval = reader.WaveFormat.SampleRate / 2; // Dla 44.1kHz, to będzie 22050 próbek
 
                 int totalSamples = (int)(totalSeconds * reader.WaveFormat.SampleRate / sampleInterval);
@@ -142,11 +140,6 @@ namespace DjProgram1.Services
             });
         }
 
-
-
-
-
-
         public double[] LoadAudioSamples(string filePath)
         {
             List<double> samples = new List<double>();
@@ -171,10 +164,6 @@ namespace DjProgram1.Services
             return samples.ToArray();
         }
 
-
-
-
-
         public void animatePhoto(RotateTransform rotateTransform)
         {
             
@@ -196,125 +185,7 @@ namespace DjProgram1.Services
         }
 
 
-        private double[] ApplyHanningWindow(double[] samples)
-        {
-            int n = samples.Length;
-            double[] windowedSamples = new double[n];
 
-            for (int i = 0; i < n; i++)
-            {
-                windowedSamples[i] = samples[i] * (0.5 - 0.5 * Math.Cos(2 * Math.PI * i / (n - 1)));
-            }
-
-            return windowedSamples;
-        }
-
-
-        private double[] ExtractAudioSamples(WaveStream waveStream)
-        {
-            int bytesPerSample = waveStream.WaveFormat.BitsPerSample / 8;
-            int numChannels = waveStream.WaveFormat.Channels;
-
-            // Liczba bajtów na komplet próbek (wszystkie kanały)
-            int bytesPerCompleteSample = bytesPerSample * numChannels;
-
-            int totalSamples = (int)(waveStream.Length / bytesPerCompleteSample);
-            double[] audioSamples = new double[totalSamples];
-            byte[] buffer = new byte[bytesPerCompleteSample];
-
-            for (int i = 0; i < totalSamples; i++)
-            {
-                waveStream.Read(buffer, 0, bytesPerCompleteSample);
-
-                audioSamples[i] = BitConverter.ToInt16(buffer, 0) / 32768.0;
-            }
-
-            return audioSamples;
-        }
-
-        private double[] ComputeAutocorrelation(double[] samples)
-        {
-            int n = samples.Length;
-            double[] result = new double[n];
-
-            for (int lag = 0; lag < n; lag++)
-            {
-                for (int i = 0; i < n - lag; i++)
-                {
-                    result[lag] += samples[i] * samples[i + lag];
-                }
-            }
-
-            return result;
-        }
-
-        private List<int> FindPeakIndices(double[] autocorrelation)
-        {
-            List<int> peakIndices = new List<int>();
-            for (int i = 1; i < autocorrelation.Length - 1; i++)
-            {
-                if (autocorrelation[i] > autocorrelation[i - 1] && autocorrelation[i] > autocorrelation[i + 1])
-                {
-                    // Interpolacja
-                    double alpha = autocorrelation[i - 1];
-                    double beta = autocorrelation[i];
-                    double gamma = autocorrelation[i + 1];
-                    double interpolatedIndex = i + 0.5 * (alpha - gamma) / (alpha - 2 * beta + gamma);
-                    peakIndices.Add((int)Math.Round(interpolatedIndex));
-                }
-            }
-
-            return peakIndices;
-        }
-
-
-
-
-        public string calculateBPMPython1(string filePath)
-        {
-            double bpm = 0;
-
-            try
-            {
-                Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
-
-                PythonEngine.Initialize();
-                using (Py.GIL()) // acquire the Python GIL (Global Interpreter Lock)
-                {
-                    dynamic librosa = Py.Import("librosa");
-                    dynamic beat = Py.Import("librosa.beat");
-
-                    // Load the audio file
-                    PyObject[] loadArgs = { new PyString(filePath) };
-                    using (var loadKwargs = new PyDict())
-                    {
-                        loadKwargs["sr"] = new PyInt(22050); // sample rate
-                        using (PyObject y_sr = librosa.InvokeMethod("load", loadArgs, loadKwargs))
-                        {
-                            PyObject y = y_sr[0];
-                            PyObject sr = y_sr[1];
-
-                            // Call the beat_track function
-                            PyObject[] beatTrackArgs = new PyObject[] { y, sr };
-                            PyObject tempo_beats = beat.GetAttr("beat_track").Invoke(beatTrackArgs);
-                            PyObject tempo = tempo_beats[0];
-                            bpm = tempo.As<double>();
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                string message = "An error occurred: " + ex.Message;
-                return message;
-            }
-            finally
-            {
-                PythonEngine.Shutdown();
-            }
-
-            return bpm.ToString();
-        }
 
         public string calculateBPMPython(string filePath)
         {
@@ -410,22 +281,6 @@ namespace DjProgram1.Services
             return timeStamps;
         }
 
-        public double ChangeBPM(double angleDelta, string BPM)
-        {
-            int change = (int)Math.Round(angleDelta / 10); 
-            double newBPM = double.Parse(BPM);
-
-            if (angleDelta > 0)
-            {
-                newBPM += change;
-            }
-            else if (angleDelta < 0)
-            {
-                newBPM -= change;
-                newBPM = Math.Max(0, newBPM); 
-            }
-            return newBPM;
-        }
 
         public void ProcessBeats(List<double> timeStamps)
         {
@@ -441,7 +296,6 @@ namespace DjProgram1.Services
         {
             try
             {
-                // Jeśli reader istnieje i nie został zamknięty, zwróć aktualną pozycję
                 if (reader != null)
                 {
                     return reader.CurrentTime.TotalSeconds;
@@ -449,9 +303,9 @@ namespace DjProgram1.Services
             }
             catch
             {
-                // Logika obsługi wyjątków, może zwracać 0 lub resetować wskaźnik
+                
             }
-            return 0; // Zwróć 0, jeśli reader nie istnieje lub wystąpił wyjątek
+            return 0; 
         }
 
 
@@ -492,8 +346,6 @@ namespace DjProgram1.Services
                 waveformCanvas.Children.Add(rect);
 
 
-                //rysowanie zielonych lini
-                // Rysowanie zielonych linii (uderzeń)
                 double nextBeat = firstBeatTimeStamp;
                 while (nextBeat < currentPosition)
                 {
@@ -512,7 +364,7 @@ namespace DjProgram1.Services
                             Y1 = 0,
                             Y2 = canvasHeight,
                             Stroke = Brushes.Green,
-                            StrokeThickness = 2
+                            StrokeThickness = 1
                         };
                         waveformCanvas.Children.Add(line);
                     }
@@ -520,18 +372,15 @@ namespace DjProgram1.Services
                 }
 
             }
-
-            
-            
-            Rectangle progressIndicator = new Rectangle
+            Rectangle progressIndicator1 = new Rectangle
             {
                 Width = 2,
                 Height = canvasHeight,
                 Fill = Brushes.Red
             };
-            Canvas.SetLeft(progressIndicator, indicatorPosition);
-            Canvas.SetTop(progressIndicator, 0);
-            waveformCanvas.Children.Add(progressIndicator);
+            Canvas.SetLeft(progressIndicator1, indicatorPosition);
+            Canvas.SetTop(progressIndicator1, 0);
+            waveformCanvas.Children.Add(progressIndicator1);
 
         }
 
@@ -575,58 +424,6 @@ namespace DjProgram1.Services
             Canvas.SetLeft(progressIndicator, indicatorPosition);
         }
 
-        private void UpdateProgressIndicator(Canvas waveformCanvas, double currentPosition, double totalDuration, int whichOne)
-        {
-            Rectangle progressIndicator;
-            double canvasWidth = waveformCanvas.ActualWidth;
-
-            // Określenie, który wskaźnik należy aktualizować
-            if (whichOne == 1)
-            {
-                progressIndicator = progressIndicator1 ?? new Rectangle
-                {
-                    Width = 2,
-                    Height = waveformCanvas.ActualHeight - 30,
-                    Fill = Brushes.Red
-                };
-                if (progressIndicator1 == null)
-                {
-                    waveformCanvas.Children.Add(progressIndicator);
-                    progressIndicator1 = progressIndicator;
-                }
-            }
-            else
-            {
-                progressIndicator = progressIndicator2 ?? new Rectangle
-                {
-                    Width = 2,
-                    Height = waveformCanvas.ActualHeight - 30,
-                    Fill = Brushes.Red
-                };
-                if (progressIndicator2 == null)
-                {
-                    waveformCanvas.Children.Add(progressIndicator);
-                    progressIndicator2 = progressIndicator;
-                }
-            }
-            double progressRatio = currentPosition / totalDuration;
-            double indicatorPosition = progressRatio * waveformCanvas.ActualWidth;
-
-            // Aby wskaźnik zatrzymał się w połowie canvas, gdy przekroczy 50% szerokości
-            if (indicatorPosition > waveformCanvas.ActualWidth / 2)
-            {
-                indicatorPosition = waveformCanvas.ActualWidth / 2;
-            }
-
-            // Aktualizacja pozycji wskaźnika
-            Canvas.SetLeft(progressIndicator, indicatorPosition - progressIndicator.Width / 2);
-
-            // Upewnij się, że wskaźnik jest widoczny na canvasie
-            if (!waveformCanvas.Children.Contains(progressIndicator))
-            {
-                waveformCanvas.Children.Add(progressIndicator);
-            }
-        }
 
         private void DisplayWaveformSegment(Canvas waveformCanvas, List<double> audioSamples, List<double> timeStamps, double currentPosition, double totalDuration, int samplesToDisplay, int whichOne)
         {
@@ -771,9 +568,7 @@ namespace DjProgram1.Services
 
 
 
-// Pythonnet ma lekkie ograniczenia - moze nie beda znaczace
-// uzyc jeszcze pythonnet ewentualnie do eq albo innych efektow
-// przsuniecie zrobic przez normalnie NAudio
+
 
 
 

@@ -155,6 +155,11 @@ namespace DjProgram1
             knob2.bpmTextBox = bpmTextBox2;
             knob1.LockKnobRotation();
             knob2.LockKnobRotation();
+
+            knobToCut1.LockKnobRotation();
+            knobToCut2.LockKnobRotation();
+            knobToCut1.Initialize(canvas1, musicService.progressIndicator1);
+            knobToCut2.Initialize(canvas2, musicService.progressIndicator2);
             LoadView();
         }
 
@@ -224,8 +229,11 @@ namespace DjProgram1
                     ctsAudioLoadingTask2 = new CancellationTokenSource();
                     audioLoadingTask2 = threadsService.LoadAudioAsync(currentAudioFile2.FilePath, ctsAudioLoadingTask2.Token);
                     await audioLoadingTask2;
-                    
 
+                    audioFileReader2 = new NAudio.Wave.AudioFileReader(currentAudioFile2.FilePath);
+
+
+                    knobToCut2.InitializeReader(audioFileReader2);                    
 
                     ctsCountBPM2 = new CancellationTokenSource();
                     pythonEngineisWorking = true;
@@ -273,8 +281,9 @@ namespace DjProgram1
 
                     musicService.StopRotation(rotateTransformLoading2);
                     imageLoading2.Visibility = Visibility.Hidden;
+                    knobToCut2.UnlockKnobRotation();
 
-                    
+
                 }
             }
 
@@ -337,6 +346,10 @@ namespace DjProgram1
                     audioLoadingTask1 = threadsService.LoadAudioAsync(currentAudioFile1.FilePath, ctsAudioLoadingTask1.Token);
                     await audioLoadingTask1;
 
+                    audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
+
+
+                    knobToCut1.InitializeReader(audioFileReader1);
 
                     ctsCountBPM1 = new CancellationTokenSource();
                     
@@ -380,6 +393,7 @@ namespace DjProgram1
                     text = text.Replace("BPM: ", "").Trim();
                     double.TryParse(text, out double bpmValue);
                     currentAudioFile1.BPM = bpmValue;
+                    knobToCut1.UnlockKnobRotation();
 
                 }
             }
