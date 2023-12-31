@@ -25,8 +25,9 @@ namespace DjProgram1.Controls
         private bool isDragging = false;
         private Point lastMousePosition;
         private double centerX = 35; 
-        private double centerY = 35; 
-        
+        private double centerY = 35;
+        private bool isKnobLocked = false;
+
         public TextBox bpmTextBox { get; set; }
 
         private MusicService musicService = new MusicService();
@@ -41,29 +42,32 @@ namespace DjProgram1.Controls
 
         private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (isKnobLocked) return;  
+
             isDragging = true;
-            lastMousePosition = e.GetPosition(this);  
+            lastMousePosition = e.GetPosition(this);
             Mouse.Capture(DotsCanvas);
         }
 
         private void Canvas_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isDragging)
-            {
-                Point currentMousePosition = e.GetPosition(this);
-                double angleDifference = CalculateAngleDifference(lastMousePosition, currentMousePosition);
+            if (!isDragging || isKnobLocked) return;
 
-                if (angleDifference != 0)
-                {
-                    UpdateBPM(angleDifference);
-                    lastMousePosition = currentMousePosition;
-                    RotateKnob(angleDifference);
-                }
+            Point currentMousePosition = e.GetPosition(this);
+            double angleDifference = CalculateAngleDifference(lastMousePosition, currentMousePosition);
+
+            if (angleDifference != 0)
+            {
+                UpdateBPM(angleDifference);
+                lastMousePosition = currentMousePosition;
+                RotateKnob(angleDifference);
             }
         }
 
         private void Canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
+            if (isKnobLocked) return; 
+
             isDragging = false;
             Mouse.Capture(null);
         }
@@ -153,6 +157,18 @@ namespace DjProgram1.Controls
         {
             return Math.Round(number * 2, MidpointRounding.AwayFromZero) / 2;
         }
+
+
+        public void LockKnobRotation()
+        {
+            isKnobLocked = true;
+        }
+
+        public void UnlockKnobRotation()
+        {
+            isKnobLocked = false;
+        }
+
     }
     
 }

@@ -13,10 +13,8 @@ def calculate_bpm(file_path):
     Returns:
     float: The calculated BPM of the audio file.
     """
-    # Load the audio file
     y, sr = librosa.load(file_path, sr=None) 
 
-    # Calculate the tempo (BPM)
     tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
     return tempo
 
@@ -46,3 +44,15 @@ def change_bpm(file_path, old_bpm, new_bpm):
 
     return output_file_path
    
+def return_time_stamps(file_path):
+
+    # Załaduj utwór
+    y, sr = librosa.load(file_path)
+
+    # Uzyskaj uderzenia i tempo
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+
+    # Konwersja uderzeń na czas
+    beat_times = librosa.frames_to_time(beats, sr=sr)
+
+    return beat_times

@@ -29,12 +29,12 @@ namespace DjProgram1.Services
 
                 // Utwórz pełną ścieżkę do nowego pliku
                 string filePath = Path.Combine(currentCatalog, fileName);
-                if(!System.IO.File.Exists(filePath))
+                if (!System.IO.File.Exists(filePath))
                 {
                     StreamWriter writer = System.IO.File.CreateText(filePath);
                 }
-                
-                
+
+
             }
             catch (Exception ex)
             {
@@ -64,7 +64,7 @@ namespace DjProgram1.Services
                         if (!existingLines.Contains(lineToWrite))
                         {
                             writer.WriteLine(lineToWrite);
-                            existingLines.Add(lineToWrite); 
+                            existingLines.Add(lineToWrite);
                         }
                     }
                 }
@@ -90,10 +90,10 @@ namespace DjProgram1.Services
 
             return "unknown";
         }
-        
+
         public double checkMetaDataBPM(string filePath)
         {
-            
+
             var file = TagLib.File.Create(filePath);
 
             if (file.Tag.BeatsPerMinute > 0)
@@ -109,8 +109,8 @@ namespace DjProgram1.Services
         public void checkSongsMetaData(AudioFile[] audioFiles)
         {
             double bpm = 0;
-            
-            foreach(var audioFile in audioFiles)
+
+            foreach (var audioFile in audioFiles)
             {
                 bpm = checkMetaDataBPM(audioFile.FilePath);
                 audioFile.BPM = bpm;
@@ -147,7 +147,57 @@ namespace DjProgram1.Services
                 }
             });
 
-            return audioFiles; 
+            return audioFiles;
         }
+        public string CheckIfSongExists(string name)
+        {
+            string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "songCopies");
+            string notFound = "";
+            if (!Directory.Exists(folderPath))
+            {
+
+                return notFound;
+            }
+
+            string[] files = Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories);
+
+            foreach (var file in files)
+            {
+                if (file.Contains(name))
+                {
+                    return file;
+                }
+            }
+            return notFound;
+        }
+
+        public void deleteSong(string filePath)
+        {
+            System.IO.File.Delete(filePath);
+        }
+
+        public void DeleteCopies()
+        {
+            string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "songCopies");
+
+            if (!Directory.Exists(folderPath))
+            {
+                return;
+            }
+
+            System.IO.FileInfo[] files = new DirectoryInfo(folderPath).GetFiles();
+
+            if (files.Length > 3)
+            {
+                System.IO.FileInfo oldestFile = files.OrderBy(f => f.CreationTime).First();
+
+                oldestFile.Delete();
+            }
+        }
+
     }
+
 }
+
+    
+

@@ -25,6 +25,7 @@ namespace DjProgram1.Services
         private double[] audioSamples;
         private int currentPosition;
 
+
         public RealtimeWaveformUpdater(Canvas canvas, double[] samples)
         {
             waveformCanvas = canvas;

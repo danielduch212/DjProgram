@@ -14,6 +14,9 @@ using TagLib;
 using System.Windows;
 using DjProgram1.Data;
 using Python.Runtime;
+using System.Windows.Threading;
+using System.Diagnostics;
+using Gst.Rtsp;
 
 namespace DjProgram1.Services
 {
@@ -21,6 +24,8 @@ namespace DjProgram1.Services
     {
         public MusicService musicService;
         public FIleService fileService;
+        private DispatcherTimer waveformUpdateTimer;
+
         private double bpm;
 
         public ThreadsService(MusicService musicService, FIleService fileService)
@@ -60,22 +65,15 @@ namespace DjProgram1.Services
             }
         }
         
-        public async Task GenerateWaveForm(string filePath, Canvas waveformCanvas)
+        public async Task GenerateInitialWaveForm(List<double> data,List<double> timeStamps, Canvas waveformCanvas)
         {
             try
             {
                 await Task.Run(() =>
                 {
+                    musicService.DisplayInitialWaveform(data, timeStamps,waveformCanvas);
 
-                    musicService.GenerateWaveform(filePath, waveformCanvas);
                 });
-
-                //to dodalem nizej
-
-
-
-
-
 
             }
             catch (OperationCanceledException)
@@ -84,95 +82,56 @@ namespace DjProgram1.Services
             }
         }
 
-        public async Task MovePositionLine(Canvas waveformCanvas, string audioFilePath, TextBlock actualTime, TextBlock durationTime, CancellationToken cancellationToken, double positionOfLine)
+        public async Task<List<double>> generateWaveFormData(string filePath)
         {
-            try
-            {
-                var audioPlayer = new AudioFileReader(audioFilePath);
-                double audioDuration = audioPlayer.TotalTime.TotalSeconds;
+            var data = new List<double>();
 
-                TimeSpan audioDurationTimeSpan = TimeSpan.FromSeconds(audioDuration);
+            await Task.Run(() =>
+            {
+
+                data = musicService.GenerateWaveformData(filePath);
+                
+            });
+            return data;
+
+        }
+
+        public async Task<List<double>> generateTimeStamps(string filePath)
+        {
+            
+            var dataTimeStamps = new List<double>();
+
+            await Task.Run(() =>
+            {
+
+                dataTimeStamps = musicService.returnTimeStampsPYTHON(filePath);
+
+            });
+            return dataTimeStamps;
+
+        }
+
+        public async Task UpdateWaveformAsync(Canvas waveformCanvas, AudioFileReader reader, List<double> audioSamples, List<double> timeStamps, double totalDuration, int whichOne)
+        {
+            
+            double sampleDisplayInterval = totalDuration / audioSamples.Count; // Interwał czasowy dla jednej próbki
+            while (true) 
+            {
+                await Task.Delay(10);
+
+                double currentPosition = musicService.GetCurrentPosition(reader);
+                int currentSampleIndex = (int)(currentPosition / sampleDisplayInterval);
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    durationTime.Text = audioDurationTimeSpan.ToString(@"mm\:ss");
+                    musicService.UpdateWaveformAndIndicator(currentPosition, totalDuration, waveformCanvas, audioSamples, timeStamps, whichOne);
                 });
-                await Task.Run(() =>
-                {
-                    double canvasWidth = waveformCanvas.ActualWidth;
-                    int numSteps = 1000;
 
-                    Line positionLine = null;
-
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        positionLine = waveformCanvas.Children.OfType<Line>().FirstOrDefault(); // Find an existing line on the canvas
-                    });
-
-                    double xPosition = positionOfLine > 0 ? positionOfLine : 0;
-
-                    if (positionLine == null) // If line does not exist, create a new one
-                    {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            positionLine = new Line();
-                            positionLine.Stroke = Brushes.Red;
-                            positionLine.X1 = xPosition;
-                            positionLine.X2 = xPosition;
-                            positionLine.Y1 = 0;
-                            positionLine.Y2 = waveformCanvas.ActualHeight;
-                            waveformCanvas.Children.Add(positionLine);
-                        });
-                    }
-                    else
-                    {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            xPosition = positionLine.X1;
-
-                        });
-                        
-                    }
-
-                    double remainingDuration = audioDuration - (xPosition / canvasWidth) * audioDuration;
-                    double xStep = canvasWidth / numSteps;
-                    double delay = (remainingDuration * 1000) / (numSteps - (xPosition / xStep));
-
-                    int stepsToPerform = numSteps - (int)(xPosition / xStep);
-
-                    for (int step = 0; step < stepsToPerform; step++)
-                    {
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            break;
-                        }
-                        if (cancellationToken.IsCancellationRequested == false)
-                        {
-                            xPosition += xStep;
-                        }
-
-                        Thread.Sleep((int)delay);
-
-                        if (cancellationToken.IsCancellationRequested == false)
-                        {
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                positionLine.X1 = xPosition;
-                                positionLine.X2 = xPosition;
-
-                                // Obliczanie aktualnej pozycji czasowej w utworze
-                                double currentTime = (xPosition / canvasWidth) * audioDuration;
-                                actualTime.Text = TimeSpan.FromSeconds(currentTime).ToString(@"mm\:ss");
-                            });
-                        }
-                    }
-                });
-            }
-            catch (OperationCanceledException)
-            {
-                // Handle cancellation
             }
         }
+
+        
+
 
         public async Task CountBPM(string filePath,System.Windows.Controls.TextBox textBox, CancellationToken cancellationToken)
         {
@@ -218,17 +177,12 @@ namespace DjProgram1.Services
             string newFilePath = "";
             try
             {
-               
-                await Task.Run(() =>
+
+               newFilePath = await Task.Run(() =>
                 {
-
-
-                    newFilePath = musicService.changeBPM(filePath, originalBPM, newBPM);
-                    return newFilePath;
-
-
-
-                });
+                    // Zwracamy nową ścieżkę pliku z funkcji 'musicService.changeBPM'
+                    return musicService.changeBPM(filePath, originalBPM, newBPM);
+                }, cancellationToken);
 
 
             }
@@ -238,6 +192,58 @@ namespace DjProgram1.Services
             }
             return newFilePath;
         }
+
+        public async Task deleteCopiedTrack(string name)
+        {
+            string filePath = "";
+            try
+            {
+                await Task.Run(() =>
+                {
+                    filePath = fileService.CheckIfSongExists(name);
+                    if (filePath != "")
+                    {
+                        fileService.deleteSong(filePath);
+                    }
+                    else
+                    {
+
+                    }
+
+
+                });
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
+
+        }
+        public async Task deleteCopies()
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    fileService.DeleteCopies();
+                });
+            }
+            catch
+            {
+
+            }
+        }
+
+        public async Task updateTimePassed()
+        {
+
+
+
+        }
+
+
+
+        
 
 
     }

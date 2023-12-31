@@ -5,27 +5,27 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DjProgram1" xmlns:controls="clr-namespace:DjProgram1.Controls"
         mc:Ignorable="d"
-        Title="DJProgram" Height="800" Width="800">
+        Title="DJProgram" Height="917" Width="801">
     <Grid Margin="0,0,0,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
             <RowDefinition Height="180" />
             <RowDefinition Height="30"/>
-            <RowDefinition Height="550"/>
-            
+            <RowDefinition Height="660"/>
+
 
 
 
             <!-- Drugi wiersz na resztę dostępnej przestrzeni -->
         </Grid.RowDefinitions>
-        
-        
+
+
         <StackPanel Grid.Row="0" >
             <!-- Przycisk "Wgraj Pliki" po lewej stronie -->
             <Button Margin="10,5,10,0" Width="100" Click="buttonUploadFiles_Click">
                 <StackPanel >
                     <TextBlock Text="Wgraj Pliki" />
-                    
+
                 </StackPanel>
             </Button>
             <Button Margin="10,-20,-500,0" Width="100" Click="reset_Data_Base_click">
@@ -69,12 +69,12 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" HorizontalAlignment="Left" Width="400">
+            <StackPanel HorizontalAlignment="Center" Width="400">
                 <Image x:Name="image1" Source="C:\Users\Janusz\Desktop\cdToAnimate.png" HorizontalAlignment="Center"  Width="150" Height="150" RenderTransformOrigin="0.5,0.5"  >
                     <Image.RenderTransform>
                         <RotateTransform x:Name="rotateTransformCD1" Angle="0" />
                     </Image.RenderTransform>
-                    
+
                 </Image>
                 <Image x:Name="imageLoading1" Source="C:\Users\Janusz\Desktop\load-icon-png-7952.png" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10,-140,10,0" Width="70" Height="70" RenderTransformOrigin="0.5,0.5"  >
                     <Image.RenderTransform>
@@ -83,13 +83,13 @@
 
                 </Image>
                 <TextBlock x:Name="readyText1" Text="READY" Margin="50,-100,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="Red" FontWeight="Bold" />
-                <TextBox Name="bpmTextBox1" Text="BPM: " Margin="0,20,0,0" HorizontalAlignment="Center" />
+                <TextBox Name="bpmTextBox1" Text="BPM: " Margin="0,20,0,0" HorizontalAlignment="Center" LostFocus="textChangedBPMTextBox1"/>
                 <controls:knob x:Name="knob1" Height ="70" Width="70" Margin="0,-40,40,0" HorizontalAlignment="Right" VerticalAlignment="Top" />
                 <TextBox Name ="songOnDeck1" Text="---------------" Margin="0,-25,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" />
                 <Button Width="50" Height="50" Margin="-120,70,10,0" HorizontalAlignment="Center" Click="playButton1_Click" Background="White">
                     <Image Source="C:\Users\Janusz\Desktop\playButton.png" />
                 </Button>
-                
+
                 <Button Width="50" Height="50" Margin="-20,-50,0,0" HorizontalAlignment="Center" Click="pauseButton1_Click" Background="White">
                     <Image Source="C:\Users\Janusz\Desktop\ikonaPause.jpg" />
                 </Button>
@@ -112,7 +112,10 @@
                 </Slider>
                 <TextBlock Name="actualTime1" Width="50" Height="50" Margin="-320,100,0,0"  />
                 <Canvas Name="canvas1" Width="250" Height="100" Background="White" Margin="0,-125,0,0" />
-                <TextBlock Name="durationTime1" Width="50" Height="50" Margin="320,-50,0,0"/>
+                <controls:knob x:Name="knobToCut1" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
+
+                <Canvas Name="previewCanvas1" Width="150" Height="50" Background="White" Margin="0,20,0,0" />
+                <TextBlock Name="durationTime1" Width="50" Height="50" Margin="320,-280,0,0"/>
 
                 <!-- Dodaj swoje pozostałe elementy -->
             </StackPanel>
@@ -132,7 +135,7 @@
                 </Image>
                 <TextBlock x:Name="readyText2" Text="READY" Margin="0,-100,50,0" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="Red" FontWeight="Bold" />
                 <controls:knob x:Name="knob2" Height ="70" Width="70" Margin="40,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
-                <TextBox x:Name="bpmTextBox2" Text="BPM: " Margin="0,-40,0,0" HorizontalAlignment="Center" />
+                <TextBox x:Name="bpmTextBox2" Text="BPM: " Margin="0,-40,0,0" HorizontalAlignment="Center" LostFocus="textChangedBPMTextBox2" />
                 <TextBlock Name ="songOnDeck2" Text="---------------" Margin="0,-20,0,0"  HorizontalAlignment="Center" VerticalAlignment="Top"/>
                 <Button Width="50" Height="50" Margin="-110,70,0,0" HorizontalAlignment="Center" Click="playButton2_Click">
                     <Image Source="C:\Users\Janusz\Desktop\playButton.png" />
@@ -143,7 +146,7 @@
                 <Button Width="50" Height="50" Margin="110,-50,0,0" HorizontalAlignment="Center" Click="stopButton2_Click">
                     <Image Source="C:\Users\Janusz\Desktop\blacksquare.png" />
                 </Button>
-                <Button Width="75" Height="50" Margin="-260,-160,0,0" HorizontalAlignment="Center" Click="changeBPM1_Click" Background="White">
+                <Button Width="75" Height="50" Margin="-260,-160,0,0" HorizontalAlignment="Center" Click="changeBPM2_Click" Background="White">
                     <TextBlock Text="Change BPM" />
                 </Button>
                 <Button Width="75" Height="50" Margin="-260,-50,0,0" HorizontalAlignment="Center" Click="synchroButton2_Click" Background="White">
@@ -159,7 +162,10 @@
                 </Slider>
                 <TextBlock Name="actualTime2" Width="50" Height="50" Margin="-320,100,0,0"  />
                 <Canvas x:Name="canvas2" Width="250" Height="100" Background="White" Margin="0,-125,0,0"/>
-                <TextBlock Name="durationTime2" Width="50" Height="50" Margin="320,-50,0,0"/>
+                <controls:knob x:Name="knobToCut2" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
+
+                <Canvas Name="previewCanvas2" Width="150" Height="50" Background="White" Margin="0,20,0,0" />
+                <TextBlock Name="durationTime2" Width="50" Height="50" Margin="320,-280,0,0"/>
             </StackPanel>
         </Grid>
     </Grid>
