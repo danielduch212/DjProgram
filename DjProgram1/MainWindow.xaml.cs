@@ -233,8 +233,6 @@ namespace DjProgram1
                     audioFileReader2 = new NAudio.Wave.AudioFileReader(currentAudioFile2.FilePath);
 
 
-                    knobToCut2.InitializeReader(audioFileReader2);                    
-
                     ctsCountBPM2 = new CancellationTokenSource();
                     pythonEngineisWorking = true;
                     countBPM2 = threadsService.CountBPM(currentAudioFile2.FilePath, bpmTextBox2, ctsCountBPM2.Token);
@@ -260,6 +258,8 @@ namespace DjProgram1
 
                     double audioDuration = audioPlayer.TotalTime.TotalSeconds;
 
+
+
                     TimeSpan audioDurationTimeSpan = TimeSpan.FromSeconds(audioDuration);
                     durationTime2.Text = audioDurationTimeSpan.ToString(@"mm\:ss");
                     actualTime2.Text = "00:00";
@@ -268,10 +268,8 @@ namespace DjProgram1
                     ready2 = true;
 
 
-                    //bpmTextBox2.Text = fileService.checkMetaDataBPM(currentAudioFile2.FilePath).ToString();
-                    //ctsCountBPM2 = new CancellationTokenSource();
-                    //countBPM2 = threadsService.CountBPM(currentAudioFile2.FilePath, bpmTextBox2, ctsCountBPM2.Token); 
-                    //await countBPM2;
+                    knobToCut2.addAtributes(audioFileReader2, waveFormData2, timeStampsData2, 2);
+
                     string text = bpmTextBox2.Text;
                     text = text.Replace("BPM: ", "").Trim();
                     double.TryParse(text, out double bpmValue);
@@ -349,7 +347,7 @@ namespace DjProgram1
                     audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
 
 
-                    knobToCut1.InitializeReader(audioFileReader1);
+                    
 
                     ctsCountBPM1 = new CancellationTokenSource();
                     
@@ -386,6 +384,7 @@ namespace DjProgram1
 
                     //setRectangleOnWaveForm(currentAudioFile1.FilePath, canvas1);
 
+                    knobToCut1.addAtributes(audioFileReader1, waveFormData1, timeStampsData1, 1);
 
                     musicService.StopRotation(rotateTransformLoading1);
                     imageLoading1.Visibility = Visibility.Hidden;
@@ -475,7 +474,8 @@ namespace DjProgram1
                 
                 if ((changedSongFilePath1 != currentAudioFile1.FilePath) && ready1== true)
                 {
-                    
+
+                    knobToCut1.LockKnobRotation();
 
                     ctsMoveLineWaveForm1 = new CancellationTokenSource();
                     audioFileReader1 = new NAudio.Wave.AudioFileReader(changedSongFilePath1);
@@ -496,10 +496,13 @@ namespace DjProgram1
                     moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds,1);
                     
                     musicService.animatePhoto(rotateTransformCD1);
+                    
                 }
                 else if ((changedSongFilePath1 == currentAudioFile1.FilePath) && ready1 == true)
                 {
                     knob1.LockKnobRotation();
+                    knobToCut1.LockKnobRotation();
+
                     bpmTextBox1.IsReadOnly = true;
                     string text = bpmTextBox1.Text;
                     text = text.Replace("BPM: ", "").Trim();
@@ -510,7 +513,7 @@ namespace DjProgram1
                     }
 
                     ctsMoveLineWaveForm1 = new CancellationTokenSource();
-                    audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
+                    //audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
                     waveOut1 = new NAudio.Wave.WaveOut();
                     waveOut1.Init(audioFileReader1);
                     waveOut1.Volume = 1.0f;
@@ -577,7 +580,8 @@ namespace DjProgram1
                 
                 if((changedSongFilePath2 != currentAudioFile2.FilePath)&&ready2 == true)
                 {
-                    
+                    knobToCut2.LockKnobRotation();
+
                     ctsMoveLineWaveForm2 = new CancellationTokenSource();
                     audioFileReader2 = new NAudio.Wave.AudioFileReader(changedSongFilePath2);
                     waveOut2 = new NAudio.Wave.WaveOut();
@@ -592,11 +596,14 @@ namespace DjProgram1
 
                     waveOut2Playing = true;
 
+
                     musicService.animatePhoto(rotateTransformCD2);
                 }
                 else if((changedSongFilePath2 == currentAudioFile2.FilePath) && ready2 == true)
                 {
-                    
+                    knobToCut2.LockKnobRotation();
+
+
                     knob2.LockKnobRotation();
                     bpmTextBox2.IsReadOnly = true;
                     string text = bpmTextBox2.Text;

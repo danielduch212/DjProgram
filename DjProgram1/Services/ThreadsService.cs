@@ -117,7 +117,7 @@ namespace DjProgram1.Services
             double sampleDisplayInterval = totalDuration / audioSamples.Count; // Interwał czasowy dla jednej próbki
             while (true) 
             {
-                await Task.Delay(10);
+                await Task.Delay(50);
 
                 double currentPosition = musicService.GetCurrentPosition(reader);
                 int currentSampleIndex = (int)(currentPosition / sampleDisplayInterval);

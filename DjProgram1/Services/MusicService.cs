@@ -346,30 +346,30 @@ namespace DjProgram1.Services
                 waveformCanvas.Children.Add(rect);
 
 
-                double nextBeat = firstBeatTimeStamp;
-                while (nextBeat < currentPosition)
-                {
-                    nextBeat += beatInterval; // Znajdź najbliższe uderzenie po bieżącej pozycji
-                }
+                //double nextBeat = firstBeatTimeStamp;
+                //while (nextBeat < currentPosition)
+                //{
+                //    nextBeat += beatInterval; // Znajdź najbliższe uderzenie po bieżącej pozycji
+                //}
 
-                while (nextBeat < currentPosition + adjustedDuration)
-                {
-                    double linePosition = shouldMove ? ((nextBeat - currentPosition) / adjustedDuration) * canvasWidth : nextBeat * sampleRate * barWidth;
-                    if (linePosition >= 0 && linePosition <= canvasWidth)
-                    {
-                        Line line = new Line
-                        {
-                            X1 = linePosition,
-                            X2 = linePosition,
-                            Y1 = 0,
-                            Y2 = canvasHeight,
-                            Stroke = Brushes.Green,
-                            StrokeThickness = 1
-                        };
-                        waveformCanvas.Children.Add(line);
-                    }
-                    nextBeat += beatInterval;
-                }
+                //while (nextBeat < currentPosition + adjustedDuration)
+                //{
+                //    double linePosition = shouldMove ? ((nextBeat - currentPosition) / adjustedDuration) * canvasWidth : nextBeat * sampleRate * barWidth;
+                //    if (linePosition >= 0 && linePosition <= canvasWidth)
+                //    {
+                //        Line line = new Line
+                //        {
+                //            X1 = linePosition,
+                //            X2 = linePosition,
+                //            Y1 = 0,
+                //            Y2 = canvasHeight,
+                //            Stroke = Brushes.Green,
+                //            StrokeThickness = 1
+                //        };
+                //        waveformCanvas.Children.Add(line);
+                //    }
+                //    nextBeat += beatInterval;
+                //}
 
             }
             Rectangle progressIndicator1 = new Rectangle
@@ -384,6 +384,92 @@ namespace DjProgram1.Services
 
         }
 
+        public void UpdateWaveformByKnob(double knobRotation, double totalDuration, Canvas waveformCanvas, List<double> audioSamples, List<double> timeStamps, int whichOne)
+        {
+            // Przeliczenie rotacji pokrętła na bieżącą pozycję w sekundach
+            double currentPosition = knobRotation * totalDuration;
+
+            int samplesToDisplay = 30 * 2; // Liczba próbek do wyświetlenia na raz
+            double canvasWidth = waveformCanvas.ActualWidth;
+            double canvasHeight = waveformCanvas.ActualHeight - 30;
+            double halfCanvasWidth = canvasWidth * 0.5;
+            double barWidth = canvasWidth / samplesToDisplay;
+            double adjustedDuration = Math.Min(30, totalDuration); // Używaj 30 sekund lub mniej, jeśli utwór jest krótszy
+            double sampleRate = audioSamples.Count / totalDuration; // Samples per second
+
+            // Aktualizacja wskaźnika postępu
+            double indicatorPosition = (currentPosition / adjustedDuration) * canvasWidth;
+            bool shouldMove = indicatorPosition >= halfCanvasWidth;
+            if (indicatorPosition >= halfCanvasWidth)
+            {
+                indicatorPosition = halfCanvasWidth;
+            }
+
+            // Wyczyść canvas przed aktualizacją
+            waveformCanvas.Children.Clear();
+
+            // Obliczanie indeksu początkowej próbki
+            int startSampleIndex = shouldMove ? (int)(currentPosition * sampleRate) - (samplesToDisplay / 2) : 0;
+            if (startSampleIndex < 0) startSampleIndex = 0;
+
+            // Rysowanie próbek audio
+            for (int i = 0; i < samplesToDisplay && (startSampleIndex + i) < audioSamples.Count; i++)
+            {
+                double sampleHeight = audioSamples[startSampleIndex + i] * canvasHeight;
+                Rectangle rect = new Rectangle
+                {
+                    Width = Math.Max(barWidth - 1, 1),
+                    Height = sampleHeight,
+                    Fill = Brushes.Black
+                };
+
+                double rectPosition = shouldMove ? (i * barWidth) : ((startSampleIndex + i) * barWidth);
+                Canvas.SetLeft(rect, rectPosition);
+                Canvas.SetTop(rect, (canvasHeight - sampleHeight) / 2);
+                waveformCanvas.Children.Add(rect);
+            }
+
+            // Tutaj musisz zdefiniować zmienne firstBeatTimeStamp i beatInterval
+            double firstBeatTimeStamp = 0; // czas pierwszego uderzenia (w sekundach)
+            double beatInterval = 1; // interwał między uderzeniami (w sekundach)
+
+            // Rysowanie linii metronomu
+            double nextBeat = firstBeatTimeStamp;
+            while (nextBeat < currentPosition)
+            {
+                nextBeat += beatInterval; // Znajdź najbliższe uderzenie po bieżącej pozycji
+            }
+
+            while (nextBeat < currentPosition + adjustedDuration)
+            {
+                double linePosition = shouldMove ? ((nextBeat - currentPosition) / adjustedDuration) * canvasWidth : nextBeat * sampleRate * barWidth;
+                if (linePosition >= 0 && linePosition <= canvasWidth)
+                {
+                    Line line = new Line
+                    {
+                        X1 = linePosition,
+                        X2 = linePosition,
+                        Y1 = 0,
+                        Y2 = canvasHeight,
+                        Stroke = Brushes.Green,
+                        StrokeThickness = 1
+                    };
+                    waveformCanvas.Children.Add(line);
+                }
+                nextBeat += beatInterval;
+            }
+
+            // Aktualizuj pozycję wskaźnika na canvasie
+            Rectangle progressIndicator1 = new Rectangle
+            {
+                Width = 2,
+                Height = canvasHeight,
+                Fill = Brushes.Red
+            };
+            Canvas.SetLeft(progressIndicator1, indicatorPosition);
+            Canvas.SetTop(progressIndicator1, 0);
+            waveformCanvas.Children.Add(progressIndicator1);
+        }
 
 
 

@@ -37,6 +37,10 @@ namespace DjProgram1.Controls
         private Canvas waveFormCanvas;
         private Rectangle progressIndicator;
 
+        List<double> audioSamples;
+        List<double> timeStamps;
+        int whichOne;
+
         public knobToCut()
         {
             InitializeComponent();
@@ -50,31 +54,36 @@ namespace DjProgram1.Controls
             this.waveFormCanvas = waveFormCanvas;
         }
 
-        public void InitializeReader(AudioFileReader reader)
+        public void addAtributes(AudioFileReader reader, List<double> audioSamples, List<double> timeStamps, int whichOne)
         {
             this.reader = reader;
             totalDuration = reader.TotalTime.TotalSeconds;
+            this.audioSamples = audioSamples;
+            this.timeStamps = timeStamps;
+            this.whichOne = whichOne;
+
         }
         private void UpdateWaveformPosition(double angleDifference)
         {
-            double secondsPerDot = 1;
-            double timeChange = angleDifference / 360.0 * secondsPerDot;
-            currentPosition += timeChange;
+            double positionChange = (angleDifference / 360.0) * totalDuration;
+            currentPosition = Math.Clamp(currentPosition + positionChange, 0, totalDuration);
 
-            currentPosition = Math.Clamp(currentPosition, 0, totalDuration);
-            waveFormCanvas.Children.Clear();
+            // Obliczenie czasu utworu na podstawie aktualnej pozycji
+            double currentTime = currentPosition / totalDuration * reader.TotalTime.TotalSeconds;
 
-            progressIndicator = new Rectangle
+            // Zaktualizuj pozycję odtwarzania w serwisie muzycznym, jeśli to konieczne
+            SetCurrentPosition(reader, currentTime);
+
+            // Wywołanie aktualizacji waveform
+            musicService.UpdateWaveformByKnob(currentPosition / totalDuration, totalDuration, waveFormCanvas, audioSamples, timeStamps, whichOne);
+        }
+
+        public void SetCurrentPosition(AudioFileReader reader, double currentTime)
+        {
+            if (reader != null && currentTime >= 0 && currentTime <= reader.TotalTime.TotalSeconds)
             {
-                Width = 2,
-                Height = waveFormCanvas.Height,
-                Fill = Brushes.Red
-            };
-            Canvas.SetLeft(progressIndicator, currentPosition);
-            Canvas.SetTop(progressIndicator, 0);
-            waveFormCanvas.Children.Add(progressIndicator);
-
-
+                reader.CurrentTime = TimeSpan.FromSeconds(currentTime);
+            }
         }
 
         private void Canvas_MouseMove(object sender, MouseEventArgs e)
@@ -87,7 +96,6 @@ namespace DjProgram1.Controls
             if (angleDifference != 0)
             {
                 UpdateWaveformPosition(angleDifference);
-
                 RotateKnob(angleDifference);
                 lastMousePosition = currentMousePosition;
             }
