@@ -158,15 +158,21 @@ namespace DjProgram1
 
             knobToCut1.LockKnobRotation();
             knobToCut2.LockKnobRotation();
-            knobToCut1.Initialize(canvas1, musicService.progressIndicator1);
-            knobToCut2.Initialize(canvas2, musicService.progressIndicator2);
-            LoadView();
+            knobToCut1.Initialize(canvas1, musicService.progressIndicator1, actualTime1);
+            knobToCut2.Initialize(canvas2, musicService.progressIndicator2, actualTime2);
+            this.Closing += MainWindow_Closing;
         }
 
-        private void LoadView()
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            if(audioFiles.Count > 0)
+            {
+                fileService.UpdateDataBase(audioFiles.ToArray());
 
+            }
         }
+        
 
         private void ListBox_MouseWheel(object sender, MouseWheelEventArgs e)
         {
@@ -235,15 +241,24 @@ namespace DjProgram1
 
                     ctsCountBPM2 = new CancellationTokenSource();
                     pythonEngineisWorking = true;
-                    countBPM2 = threadsService.CountBPM(currentAudioFile2.FilePath, bpmTextBox2, ctsCountBPM2.Token);
-                    await countBPM2;
+                    if (currentAudioFile2.BPM == 0 || currentAudioFile2.BPM == null)
+                    {
+                        countBPM2 = threadsService.CountBPM(currentAudioFile2.FilePath, bpmTextBox2, ctsCountBPM2.Token);
+                        await countBPM2;
+                    }
+                    else
+                    {
+                        bpmTextBox2.Text = "BPM: " + currentAudioFile2.BPM.ToString();
+                    }
+
+
+
                     pythonEngineisWorking = false;
 
                     knob2.UnlockKnobRotation();
 
                     uploadTrackFinished2 = true;
 
-                    //generowanie initial waveform
                     waveFormData2 = await threadsService.generateWaveFormData(currentAudioFile2.FilePath);
                     timeStampsData2 = await threadsService.generateTimeStamps(currentAudioFile2.FilePath);
 
@@ -275,7 +290,6 @@ namespace DjProgram1
                     double.TryParse(text, out double bpmValue);
                     currentAudioFile2.BPM = bpmValue;
 
-                    setRectangleOnWaveForm(currentAudioFile2.FilePath, canvas2);
 
                     musicService.StopRotation(rotateTransformLoading2);
                     imageLoading2.Visibility = Visibility.Hidden;
@@ -352,8 +366,16 @@ namespace DjProgram1
                     ctsCountBPM1 = new CancellationTokenSource();
                     
                     pythonEngineisWorking = true;
-                    countBPM1 = threadsService.CountBPM(currentAudioFile1.FilePath, bpmTextBox1, ctsCountBPM1.Token);
-                    await countBPM1;
+                    if(currentAudioFile1.BPM == 0 || currentAudioFile1.BPM == null)
+                    {
+                        countBPM1 = threadsService.CountBPM(currentAudioFile1.FilePath, bpmTextBox1, ctsCountBPM1.Token);
+                        await countBPM1;
+                    }
+                    else
+                    {
+                        bpmTextBox1.Text = "BPM: " + currentAudioFile1.BPM.ToString();
+                    }
+                    
                     pythonEngineisWorking = false;
 
                     knob1.UnlockKnobRotation();
@@ -399,17 +421,18 @@ namespace DjProgram1
         }
         private async void buttonUploadFiles_Click(object sender, RoutedEventArgs e)
         {
-            
-            ListBox listBox = songList;
+            var dialog = new System.Windows.Forms.FolderBrowserDialog();
 
-            audioFiles = fileService.uploadSongs(audioFiles, listBox);
+            var result = dialog.ShowDialog();
 
-            fileService.createFile();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                string folderPath = dialog.SelectedPath; 
 
-            ctsCreateDataBase = new CancellationTokenSource();  
-            createDataBase = threadsService.GenerateDataBase(audioFiles.ToArray(), ctsCreateDataBase.Token);
-            await createDataBase;
+                audioFiles = fileService.uploadSongs(audioFiles, folderPath, songList);
+            }
         }
+
         private void prepare_track_click(object sender, RoutedEventArgs e)
         {
 
@@ -417,53 +440,23 @@ namespace DjProgram1
 
         private async void reset_Data_Base_click(object sender, RoutedEventArgs e)
         {
-            if(ctsCreateDataBase != null)
+            if (audioFiles.Count == 0 || audioFiles == null)
             {
-                ctsCreateDataBase.Cancel();
+                fileService.clearDataBase();
+                MessageBoxResult result = MessageBox.Show(
+                    "Zresetowano baze danych",
+                    "Potwierdzenie",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
-            if(waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Playing)
+            else
             {
-                waveOut1.Stop();
-                ctsMoveLineWaveForm1.Cancel();
-                waveOut1.Dispose();
+                MessageBoxResult result = MessageBox.Show(
+                    "Bazę danych można usunąć tylko przy starcie programu.",
+                    "Potwierdzenie",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
-            if (waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Paused)
-            {
-                waveOut1.Stop();
-                waveOut1.Dispose();
-            }
-            if (waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Stopped)
-            {
-                waveOut1.Dispose();
-            }
-
-
-
-            if (waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Playing)
-            {
-                waveOut2.Stop();
-                ctsMoveLineWaveForm2.Cancel();
-                waveOut2.Dispose();
-            }
-            if (waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Paused)
-            {
-                waveOut2.Stop();
-                waveOut2.Dispose();
-            }
-            if (waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Stopped)
-            {
-                waveOut2.Dispose();
-            }
-
-            ListBox listBox = songList;
-
-            audioFiles = fileService.uploadSongs(audioFiles, listBox);
-
-            fileService.createFile();
-
-            ctsCreateDataBase = new CancellationTokenSource();
-            createDataBase = threadsService.GenerateDataBase(audioFiles.ToArray(), ctsCreateDataBase.Token);
-            await createDataBase;
         }
 
         private async void playButton1_Click(object sender, RoutedEventArgs e)
@@ -481,7 +474,12 @@ namespace DjProgram1
                     audioFileReader1 = new NAudio.Wave.AudioFileReader(changedSongFilePath1);
 
                     waveOut1 = new NAudio.Wave.WaveOut();
+                    
+
                     waveOut1.Init(audioFileReader1);
+
+                    waveOut1.PlaybackStopped += OnPlaybackStopped1;
+
                     waveOut1.Volume = 1.0f;
 
 
@@ -493,8 +491,8 @@ namespace DjProgram1
                     //moveLineWaveForm1 = threadsService.MovePositionLine(canvas1, currentAudioFile1.FilePath, actualTime1, durationTime1, ctsMoveLineWaveForm1.Token, positionOfLine1, timer1);
                     //await moveLineWaveForm1;
 
-                    moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds,1);
-                    
+                    moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1, ctsMoveLineWaveForm1.Token);
+
                     musicService.animatePhoto(rotateTransformCD1);
                     
                 }
@@ -515,7 +513,12 @@ namespace DjProgram1
                     ctsMoveLineWaveForm1 = new CancellationTokenSource();
                     //audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
                     waveOut1 = new NAudio.Wave.WaveOut();
+                 
+
+
                     waveOut1.Init(audioFileReader1);
+                    waveOut1.PlaybackStopped += OnPlaybackStopped1;
+
                     waveOut1.Volume = 1.0f;
 
                     waveOut1Playing = true;
@@ -527,7 +530,7 @@ namespace DjProgram1
 
                     //moveLineWaveForm1 = threadsService.MovePositionLine(canvas1, currentAudioFile1.FilePath, actualTime1, durationTime1, ctsMoveLineWaveForm1.Token, positionOfLine1, timer1);
 
-                    moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1);
+                    moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1, ctsMoveLineWaveForm1.Token);
 
 
                     musicService.animatePhoto(rotateTransformCD1);
@@ -546,7 +549,7 @@ namespace DjProgram1
                 waveOut1.Play();
                 ctsMoveLineWaveForm1 = new CancellationTokenSource();
                 //moveLineWaveForm1 = threadsService.MovePositionLine(canvas1, currentAudioFile1.FilePath, actualTime1, durationTime1, ctsMoveLineWaveForm1.Token, positionOfLine1, timer1);
-                moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1);
+                moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1, ctsMoveLineWaveForm1.Token);
 
 
                 musicService.animatePhoto(rotateTransformCD1);
@@ -560,12 +563,15 @@ namespace DjProgram1
                 waveOut1 = new NAudio.Wave.WaveOut();
                 waveOut1.Init(audioFileReader1);
 
+                waveOut1.PlaybackStopped += OnPlaybackStopped1;
+
+
                 timer1.Start();
                 waveOut1.Play();
 
                 ctsMoveLineWaveForm1 = new CancellationTokenSource();
                 //moveLineWaveForm1 = threadsService.MovePositionLine(canvas1, currentAudioFile1.FilePath, actualTime1, durationTime1, ctsMoveLineWaveForm1.Token, positionOfLine1, timer1);
-                moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1);
+                moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1, ctsMoveLineWaveForm1.Token);
 
 
                 musicService.animatePhoto(rotateTransformCD1);
@@ -583,16 +589,20 @@ namespace DjProgram1
                     knobToCut2.LockKnobRotation();
 
                     ctsMoveLineWaveForm2 = new CancellationTokenSource();
-                    audioFileReader2 = new NAudio.Wave.AudioFileReader(changedSongFilePath2);
+                    //audioFileReader2 = new NAudio.Wave.AudioFileReader(changedSongFilePath2);
                     waveOut2 = new NAudio.Wave.WaveOut();
                     waveOut2.Init(audioFileReader2);
+
+                    waveOut2.PlaybackStopped += OnPlaybackStopped2;
+
+
                     waveOut2.Volume = 1.0f;
 
                     musicService.InitTimer(timer2, actualTime2, audioFileReader2, 2);
                     timer2.Start();
                     waveOut2.Play();
                     //moveLineWaveForm2 = threadsService.MovePositionLine(canvas2, currentAudioFile2.FilePath, actualTime2, durationTime2, ctsMoveLineWaveForm2.Token, positionOfLine2, timer2);
-                    moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds,2);
+                    moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds, 2, ctsMoveLineWaveForm2.Token);
 
                     waveOut2Playing = true;
 
@@ -617,7 +627,13 @@ namespace DjProgram1
                     ctsMoveLineWaveForm2 = new CancellationTokenSource();
                     audioFileReader2 = new NAudio.Wave.AudioFileReader(currentAudioFile2.FilePath);
                     waveOut2 = new NAudio.Wave.WaveOut();
+
+
                     waveOut2.Init(audioFileReader2);
+
+                    waveOut2.PlaybackStopped += OnPlaybackStopped2;
+
+
                     waveOut2.Volume = 1.0f;
 
                     musicService.InitTimer(timer2, actualTime2, audioFileReader2, 2);
@@ -625,7 +641,7 @@ namespace DjProgram1
                     timer2.Start();
                     waveOut2.Play();
                     //moveLineWaveForm2 = threadsService.MovePositionLine(canvas2, currentAudioFile2.FilePath, actualTime2, durationTime2, ctsMoveLineWaveForm2.Token, positionOfLine2, timer2);
-                    moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds,2);
+                    moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds, 2, ctsMoveLineWaveForm2.Token);
 
 
                     waveOut2Playing = true;
@@ -641,7 +657,7 @@ namespace DjProgram1
                 waveOut2.Play();
                 ctsMoveLineWaveForm2 = new CancellationTokenSource();
 
-                moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds,2);
+                moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds, 2, ctsMoveLineWaveForm2.Token);
 
                 //await moveLineWaveForm2;
                 musicService.animatePhoto(rotateTransformCD2);
@@ -655,10 +671,13 @@ namespace DjProgram1
                 audioFileReader2 = new NAudio.Wave.AudioFileReader(currentAudioFile2.FilePath);
                 waveOut2 = new NAudio.Wave.WaveOut();
                 waveOut2.Init(audioFileReader2);
+                waveOut2.PlaybackStopped += OnPlaybackStopped2;
+
+
                 timer2.Start();
                 waveOut2.Play();
                 ctsMoveLineWaveForm2 = new CancellationTokenSource();
-                moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds,2);
+                moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds,2, ctsMoveLineWaveForm2.Token);
 
                 //await moveLineWaveForm2;
 
@@ -712,7 +731,6 @@ namespace DjProgram1
                 positionOfLine1 = 0;
                 waveOut1Playing = false;
 
-                // Move the position line back to the start
                 Line positionLine = canvas1.Children.OfType<Line>().FirstOrDefault();
                 if (positionLine != null)
                 {
@@ -756,7 +774,6 @@ namespace DjProgram1
         {
             if (waveOut1 != null)
             {
-                // Ustaw głośność na procent wartości suwaka
                 waveOut1.Volume = (float)volumeSlider1.Value / 100;
             }
         }
@@ -765,7 +782,6 @@ namespace DjProgram1
         {
             if (waveOut2 != null)
             {
-                // Ustaw głośność na procent wartości suwaka
                 waveOut2.Volume = (float)volumeSlider2.Value / 100;
             }
         }
@@ -774,6 +790,9 @@ namespace DjProgram1
         {
             if((ready1 = true && bpmTextBox2.Text!="BPM: ")&&bpmTextBox1.IsReadOnly == false && pythonEngineisWorking == false)
             {
+
+
+                knobToCut1.LockKnobRotation();
 
                 bpmTextBox1.Text = bpmTextBox2.Text;
                 string text = bpmTextBox1.Text;
@@ -791,23 +810,36 @@ namespace DjProgram1
 
                     pythonEngineisWorking = true;
                     changedSongFilePath1 = await threadsService.changeBPM(currentAudioFile1.FilePath, (double)currentAudioFile1.BPM, newBPM, ctsChangeBPM1.Token);
+
+                    waveFormData1 = await threadsService.generateWaveFormData(changedSongFilePath1);
+                    timeStampsData1 = await threadsService.generateTimeStamps(changedSongFilePath1);
+
+
+                    generateWaveformTask1 = threadsService.GenerateInitialWaveForm(waveFormData1, timeStampsData1, canvas1);
+                    await generateWaveformTask1;
+
+                    audioFileReader1 = new AudioFileReader(changedSongFilePath1);
+                    knobToCut1.addAtributes(audioFileReader1, waveFormData1, timeStampsData1, 1);
+
                     pythonEngineisWorking = false;
+
+
 
                     readyText1.Foreground = Brushes.Green;
                     knob1.LockKnobRotation();
                     bpmTextBox1.IsReadOnly = true;
                     ready1 = true;
                 }
-
+                knobToCut2.UnlockKnobRotation();
             }
         }
         private async void synchroButton2_Click(object sender, RoutedEventArgs e)
         {
-            
+
             
             if (ready2 = true && bpmTextBox1.Text != "BPM: "&& pythonEngineisWorking == false) 
             {
-
+                knobToCut2.LockKnobRotation();
                 bpmTextBox2.Text = bpmTextBox1.Text;
                 string text = bpmTextBox2.Text;
                 text = text.Replace("BPM: ", "").Trim();
@@ -823,14 +855,29 @@ namespace DjProgram1
 
                     pythonEngineisWorking = true;
                     changedSongFilePath2 = await threadsService.changeBPM(currentAudioFile2.FilePath, (double)currentAudioFile2.BPM, newBPM, ctsChangeBPM2.Token);
+
+                    waveFormData2 = await threadsService.generateWaveFormData(changedSongFilePath2);
+                    timeStampsData2 = await threadsService.generateTimeStamps(changedSongFilePath2);
+
+
+                    generateWaveformTask2 = threadsService.GenerateInitialWaveForm(waveFormData2, timeStampsData2, canvas2);
+                    await generateWaveformTask2;
+
+                    audioFileReader2 = new AudioFileReader(changedSongFilePath2);
+                    knobToCut2.addAtributes(audioFileReader2, waveFormData2, timeStampsData2, 2);
+
+                    isWaveformGenerated1 = true;
+
                     pythonEngineisWorking = false;
+
+
 
                     readyText2.Foreground = Brushes.Green;
                     knob2.LockKnobRotation();
                     bpmTextBox2.IsReadOnly = true;
                     ready2 = true;
                 }
-
+                knobToCut2.UnlockKnobRotation();
             }
         }
 
@@ -841,7 +888,8 @@ namespace DjProgram1
             {
                 return;
             }
-            
+            knobToCut1.LockKnobRotation();
+
             string text = bpmTextBox1.Text;
             text = text.Replace("BPM: ", "").Trim();
             double newBPM = double.Parse(text);
@@ -857,6 +905,18 @@ namespace DjProgram1
 
                 pythonEngineisWorking = true;
                 changedSongFilePath1 = await threadsService.changeBPM(currentAudioFile1.FilePath, (double)currentAudioFile1.BPM, newBPM, ctsChangeBPM1.Token);
+
+                waveFormData1 = await threadsService.generateWaveFormData(changedSongFilePath1);
+                timeStampsData1 = await threadsService.generateTimeStamps(changedSongFilePath1);
+
+
+                generateWaveformTask1 = threadsService.GenerateInitialWaveForm(waveFormData1, timeStampsData1, canvas1);
+                await generateWaveformTask1;
+
+                audioFileReader1 = new AudioFileReader(changedSongFilePath1);
+                knobToCut1.addAtributes(audioFileReader1, waveFormData1, timeStampsData1, 1);
+
+
                 pythonEngineisWorking = false;
                 
                 readyText1.Foreground = Brushes.Green;
@@ -864,6 +924,7 @@ namespace DjProgram1
                 bpmTextBox1.IsReadOnly = true;
                 ready1 = true;
             }
+            knobToCut1.UnlockKnobRotation();
             
 
         }
@@ -871,7 +932,7 @@ namespace DjProgram1
         private async void changeBPM2_Click(object sender, RoutedEventArgs e)
         {
 
-            
+            knobToCut1.LockKnobRotation();
             string text = bpmTextBox2.Text;
             text = text.Replace("BPM: ", "").Trim();
             double newBPM = double.Parse(text);
@@ -886,6 +947,17 @@ namespace DjProgram1
 
                 pythonEngineisWorking = true;
                 changedSongFilePath2 = await threadsService.changeBPM(currentAudioFile2.FilePath, (double)currentAudioFile2.BPM, newBPM, ctsChangeBPM2.Token);
+
+                waveFormData2 = await threadsService.generateWaveFormData(changedSongFilePath2);
+                timeStampsData2 = await threadsService.generateTimeStamps(changedSongFilePath2);
+
+
+                generateWaveformTask2 = threadsService.GenerateInitialWaveForm(waveFormData2, timeStampsData2, canvas2);
+                await generateWaveformTask2;
+
+                audioFileReader2 = new AudioFileReader(changedSongFilePath2);
+                knobToCut2.addAtributes(audioFileReader2, waveFormData2, timeStampsData2, 2);
+
                 pythonEngineisWorking = false;
                 
                 readyText2.Foreground = Brushes.Green;
@@ -893,7 +965,7 @@ namespace DjProgram1
                 bpmTextBox2.IsReadOnly = true;
                 ready2 = true;
             }
-
+            knobToCut2.UnlockKnobRotation();
 
         }
 
@@ -923,48 +995,18 @@ namespace DjProgram1
             }
         }
 
-
-        /////// ustawienie na razie na preview WaveFormu
-        private void setRectangleOnWaveForm(string filePath, Canvas previewCanvas)
+        private void OnPlaybackStopped1(object sender, NAudio.Wave.StoppedEventArgs args)
         {
-            using (var reader = new AudioFileReader(filePath))
-            {
-                double trackLengthInSeconds = reader.TotalTime.TotalSeconds;
-                double selectionWidth = (30.0 / trackLengthInSeconds) * previewCanvas.ActualWidth;
-
-                Rectangle selectionRect = new Rectangle
-                {
-                    Width = selectionWidth,
-                    Height = previewCanvas.ActualHeight,
-                    Fill = new SolidColorBrush(Color.FromArgb(128, 255, 255, 255)) // Półprzezroczysty
-                };
-
-                // Ustawienie prostokąta selektora na początku podglądu
-                Canvas.SetLeft(selectionRect, 0);
-                Canvas.SetTop(selectionRect, 0);
-                previewCanvas.Children.Add(selectionRect);
-
-                // Tworzenie zachowania przeciągania dla prostokąta
-                new DraggableBehavior(selectionRect, previewCanvas);
-            }
+            ctsMoveLineWaveForm1.Cancel();
+        }
+        private void OnPlaybackStopped2(object sender, NAudio.Wave.StoppedEventArgs args)
+        {
+            ctsMoveLineWaveForm2.Cancel();
 
         }
 
-        
 
 
-        // pobierac bpm z metadanych - lub ustawiac recznie
-        // dodac dwa pokretla - jedno do ustawiania bpm drugie do przyspieszania - chyba to nie ma sensu? xd
-        // poprawić wyglad
-        // 03.08 zrobic zeby mozna bylo odpalac mp3 i wave bez przeszkod
-        // Konsultacja: 04.08 10:00
-        // zrobic taka mala baze danych w pliku i pobierac te nuty z metadanych co sa i liczyc na watku dla innych
-        // zrobic na watkach
 
-        // 18.10 NOWY POMYSL
-        // zrobic dwa outputy - jezeli DJ chce dopasowac kawalek to wycisza sobie cos tam i patrzy na sluchawkach to przesuniecie
-        // czyli moze zmienia sie kolor tego waveformu ktory juz leci (blokuje sie) - pokazuje apka ze tryb dopasowania
-        // i dj moze na spokojnie se przesunac track
-        // dodatkowo zmienic ten waveform na bardziej kwadratowe linie - nie jak teraz takie dziwne
     }
 }

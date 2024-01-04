@@ -38,11 +38,22 @@
 
 
         <Border BorderBrush="Black" BorderThickness="2" Padding="5" Grid.Row="1" Margin="0,0,0,0">
-            <ListBox Name="songList" MouseWheel="ListBox_MouseWheel" Height="200" Width="767"
-             ScrollViewer.VerticalScrollBarVisibility="Auto"
-             ScrollViewer.PanningMode="Both"
-             ScrollViewer.PanningDeceleration="0.5">
-                <!-- Dodaj więcej elementów listy -->
+            <ListBox Name="songList" HorizontalContentAlignment="Stretch" MouseWheel="ListBox_MouseWheel" Height="200" Width="767"
+        ScrollViewer.VerticalScrollBarVisibility="Auto"
+        ScrollViewer.PanningMode="Both"
+        ScrollViewer.PanningDeceleration="0.5">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Width="{Binding ElementName=songList, Path=ActualWidth}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding FileName}" Grid.Column="0" TextAlignment="Left" />
+                            <TextBlock Text="{Binding BPMText}" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,10,0" FontWeight="Bold" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
             </ListBox>
         </Border>
         <!-- Panel przycisków -->

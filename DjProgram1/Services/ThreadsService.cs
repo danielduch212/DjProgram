@@ -55,8 +55,7 @@ namespace DjProgram1.Services
                     return;
 
                 
-                //musicService.GenerateWaveform(audioSamples, canvas2);
-                //bpmTextBox1.Text = "BPM: " + musicService.CalculateBPM(audioSamples); // Przykładowe obliczenie BPM
+                
 
             }
             catch (OperationCanceledException)
@@ -111,13 +110,19 @@ namespace DjProgram1.Services
 
         }
 
-        public async Task UpdateWaveformAsync(Canvas waveformCanvas, AudioFileReader reader, List<double> audioSamples, List<double> timeStamps, double totalDuration, int whichOne)
+        public async Task UpdateWaveformAsync(Canvas waveformCanvas, AudioFileReader reader, List<double> audioSamples, List<double> timeStamps, double totalDuration, int whichOne, CancellationToken cancellationToken)
         {
-            
-            double sampleDisplayInterval = totalDuration / audioSamples.Count; // Interwał czasowy dla jednej próbki
-            while (true) 
+            double sampleDisplayInterval = totalDuration / audioSamples.Count;
+            while (true)
             {
-                await Task.Delay(50);
+                await Task.Delay(50);  // Odczekaj krótki czas
+
+                // Sprawdź, czy operacja nie została anulowana
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    // Możesz też ręcznie rzucić wyjątek, jeśli potrzebujesz obsłużyć anulowanie w specyficzny sposób
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
 
                 double currentPosition = musicService.GetCurrentPosition(reader);
                 int currentSampleIndex = (int)(currentPosition / sampleDisplayInterval);
@@ -126,11 +131,10 @@ namespace DjProgram1.Services
                 {
                     musicService.UpdateWaveformAndIndicator(currentPosition, totalDuration, waveformCanvas, audioSamples, timeStamps, whichOne);
                 });
-
             }
         }
 
-        
+
 
 
         public async Task CountBPM(string filePath,System.Windows.Controls.TextBox textBox, CancellationToken cancellationToken)
@@ -234,12 +238,7 @@ namespace DjProgram1.Services
             }
         }
 
-        public async Task updateTimePassed()
-        {
-
-
-
-        }
+        
 
 
 

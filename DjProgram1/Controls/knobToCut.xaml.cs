@@ -37,9 +37,16 @@ namespace DjProgram1.Controls
         private Canvas waveFormCanvas;
         private Rectangle progressIndicator;
 
+        private TimeSpan currentTime;
+
         List<double> audioSamples;
         List<double> timeStamps;
         int whichOne;
+
+        TextBlock textBLock;
+
+
+
 
         public knobToCut()
         {
@@ -48,10 +55,11 @@ namespace DjProgram1.Controls
             DrawDots();
         }
 
-        public void Initialize(Canvas waveFormCanvas, Rectangle progressIndicator)
+        public void Initialize(Canvas waveFormCanvas, Rectangle progressIndicator, TextBlock textBlock)
         {
             this.progressIndicator = progressIndicator;
             this.waveFormCanvas = waveFormCanvas;
+            this.textBLock = textBlock;
         }
 
         public void addAtributes(AudioFileReader reader, List<double> audioSamples, List<double> timeStamps, int whichOne)
@@ -74,6 +82,9 @@ namespace DjProgram1.Controls
             // Zaktualizuj pozycję odtwarzania w serwisie muzycznym, jeśli to konieczne
             SetCurrentPosition(reader, currentTime);
 
+            textBLock.Text = currentTime.ToString(@"mm\:ss");
+
+            
             // Wywołanie aktualizacji waveform
             musicService.UpdateWaveformByKnob(currentPosition / totalDuration, totalDuration, waveFormCanvas, audioSamples, timeStamps, whichOne);
         }
