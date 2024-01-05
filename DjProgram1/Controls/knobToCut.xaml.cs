@@ -20,7 +20,7 @@ namespace DjProgram1.Controls
     /// <summary>
     /// Logika interakcji dla klasy knobMix.xaml
     /// </summary>
-    public partial class knobToCut : UserControl
+    public partial class KnobToCut : UserControl
     {
         private const int NumberOfDots = 10;
         private double centerX = 35;
@@ -41,14 +41,16 @@ namespace DjProgram1.Controls
 
         List<double> audioSamples;
         List<double> timeStamps;
+        List<double> beatIntervals;
         int whichOne;
 
+
         TextBlock textBLock;
+        double beatThreshold = 2;
 
 
 
-
-        public knobToCut()
+        public KnobToCut()
         {
             InitializeComponent();
 
@@ -62,31 +64,60 @@ namespace DjProgram1.Controls
             this.textBLock = textBlock;
         }
 
-        public void addAtributes(AudioFileReader reader, List<double> audioSamples, List<double> timeStamps, int whichOne)
+        public void addAtributes(AudioFileReader reader, List<double> audioSamples, List<double> timeStamps)
         {
             this.reader = reader;
             totalDuration = reader.TotalTime.TotalSeconds;
             this.audioSamples = audioSamples;
             this.timeStamps = timeStamps;
             this.whichOne = whichOne;
+            beatIntervals = GenerateBeatIntervals(timeStamps, totalDuration);
 
         }
+        public List<double> GenerateBeatIntervals(List<double> timeStamps, double totalDuration)
+        {
+            List<double> beatIntervals = new List<double>();
+            double interval = musicService.getInterval(timeStamps);
+            if (interval > 0)
+            {
+                for (double beat = timeStamps[0]; beat <= totalDuration; beat += interval)
+                {
+                    beatIntervals.Add(beat);
+                }
+            }
+            return beatIntervals;
+        }
+
         private void UpdateWaveformPosition(double angleDifference)
         {
-            double positionChange = (angleDifference / 360.0) * totalDuration;
-            currentPosition = Math.Clamp(currentPosition + positionChange, 0, totalDuration);
+            double positionChange = (angleDifference / 720.0) * totalDuration;
+            currentPosition += positionChange;
+            currentPosition = Math.Clamp(currentPosition, 0, totalDuration);
 
-            // Obliczenie czasu utworu na podstawie aktualnej pozycji
-            double currentTime = currentPosition / totalDuration * reader.TotalTime.TotalSeconds;
+            currentPosition = SnapToNearestBeat(currentPosition, beatIntervals, beatThreshold);
 
-            // Zaktualizuj pozycję odtwarzania w serwisie muzycznym, jeśli to konieczne
-            SetCurrentPosition(reader, currentTime);
+            double currentTimeInSeconds = currentPosition / totalDuration * reader.TotalTime.TotalSeconds;
+            SetCurrentPosition(reader, currentTimeInSeconds);
 
-            textBLock.Text = currentTime.ToString(@"mm\:ss");
+            TimeSpan time = TimeSpan.FromSeconds(currentTimeInSeconds);
+            textBLock.Text = time.ToString(@"mm\:ss");
 
-            
-            // Wywołanie aktualizacji waveform
-            musicService.UpdateWaveformByKnob(currentPosition / totalDuration, totalDuration, waveFormCanvas, audioSamples, timeStamps, whichOne);
+            musicService.UpdateWaveformByKnob(currentPosition / totalDuration, totalDuration, waveFormCanvas, audioSamples, timeStamps);
+        }
+
+
+        private double SnapToNearestBeat(double currentPosition, List<double> timeStamps, double threshold)
+        {
+            double nearestBeat = beatIntervals
+                .OrderBy(beat => Math.Abs(currentPosition - beat))
+                .FirstOrDefault();
+
+            if (Math.Abs(currentPosition - nearestBeat) <= threshold)
+            {
+                return nearestBeat;
+            }
+
+            return currentPosition;
         }
 
         public void SetCurrentPosition(AudioFileReader reader, double currentTime)
@@ -171,10 +202,7 @@ namespace DjProgram1.Controls
             transform.Angle += angle;
         }
 
-        private double RoundToNearestHalf(double number)
-        {
-            return Math.Round(number * 2, MidpointRounding.AwayFromZero) / 2;
-        }
+        
 
         public void LockKnobRotation()
         {

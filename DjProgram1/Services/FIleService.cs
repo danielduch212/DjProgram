@@ -11,7 +11,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Forms;
+using System.Windows.Media;
 using TagLib;
+using ListBox = System.Windows.Controls.ListBox;
 
 namespace DjProgram1.Services
 {
@@ -297,6 +299,64 @@ namespace DjProgram1.Services
                 oldestFile.Delete();
             }
         }
+
+        public void RefreshListBox(ListBox listBox, List<AudioFile> audioFiles)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                listBox.Items.Clear();
+
+                foreach (var audioFile in audioFiles)
+                {
+                    listBox.Items.Add(CreateListBoxItem(audioFile));
+                }
+            });
+            
+        }
+
+        private ListBoxItem CreateListBoxItem(AudioFile audioFile)
+        {
+            return System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                var listBoxItem = new ListBoxItem
+                {
+                    HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
+                    Background = audioFile.BPM.HasValue && audioFile.BPM > 0 ? Brushes.White : Brushes.LightGray
+                };
+
+                var grid = new Grid();
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var fileNameTextBlock = new TextBlock
+                {
+                    Text = audioFile.FileName,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextWrapping = TextWrapping.NoWrap
+                };
+                Grid.SetColumn(fileNameTextBlock, 0);
+
+                var bpmTextBlock = new TextBlock
+                {
+                    Text = audioFile.BPM.HasValue && audioFile.BPM > 0 ? $"BPM: {audioFile.BPM.Value}" : "BPM: 0",
+                    FontWeight = FontWeights.Bold,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+                    Margin = new Thickness(0, 0, 10, 0)
+                };
+                Grid.SetColumn(bpmTextBlock, 1);
+
+                grid.Children.Add(fileNameTextBlock);
+                grid.Children.Add(bpmTextBlock);
+
+                listBoxItem.Content = grid;
+
+                return listBoxItem; // This return statement is for the lambda passed to Dispatcher.Invoke
+            }) as ListBoxItem; // This is the actual return of your CreateListBoxItem method
+        }
+
+
+
 
     }
 

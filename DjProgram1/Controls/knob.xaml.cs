@@ -19,7 +19,7 @@ namespace DjProgram1.Controls
     /// <summary>
     /// Logika interakcji dla klasy knob.xaml
     /// </summary>
-    public partial class knob : UserControl
+    public partial class Knob : UserControl
     {
         private const int NumberOfDots = 10;
         private bool isDragging = false;
@@ -33,7 +33,7 @@ namespace DjProgram1.Controls
         private MusicService musicService = new MusicService();
         double bpmValue = 0;
 
-        public knob()
+        public Knob()
         {
             InitializeComponent();
 

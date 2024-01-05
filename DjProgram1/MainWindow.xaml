@@ -95,7 +95,7 @@
                 </Image>
                 <TextBlock x:Name="readyText1" Text="READY" Margin="50,-100,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="Red" FontWeight="Bold" />
                 <TextBox Name="bpmTextBox1" Text="BPM: " Margin="0,20,0,0" HorizontalAlignment="Center" LostFocus="textChangedBPMTextBox1"/>
-                <controls:knob x:Name="knob1" Height ="70" Width="70" Margin="0,-40,40,0" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                <controls:Knob x:Name="knob1" Height ="70" Width="70" Margin="0,-40,40,0" HorizontalAlignment="Right" VerticalAlignment="Top" />
                 <TextBox Name ="songOnDeck1" Text="---------------" Margin="0,-25,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" />
                 <Button Width="50" Height="50" Margin="-120,70,10,0" HorizontalAlignment="Center" Click="playButton1_Click" Background="White">
                     <Image Source="C:\Users\Janusz\Desktop\playButton.png" />
@@ -123,7 +123,7 @@
                 </Slider>
                 <TextBlock Name="actualTime1" Width="50" Height="50" Margin="-320,100,0,0"  />
                 <Canvas Name="canvas1" Width="250" Height="100" Background="White" Margin="0,-125,0,0" />
-                <controls:knobToCut x:Name="knobToCut1" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
+                <controls:KnobToCut x:Name="knobToCut1" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
 
                 <Canvas Name="previewCanvas1" Width="150" Height="50" Background="White" Margin="0,20,0,0" />
                 <TextBlock Name="durationTime1" Width="50" Height="50" Margin="320,-280,0,0"/>
@@ -145,9 +145,9 @@
 
                 </Image>
                 <TextBlock x:Name="readyText2" Text="READY" Margin="0,-100,50,0" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="Red" FontWeight="Bold" />
-                <controls:knob x:Name="knob2" Height ="70" Width="70" Margin="40,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                <controls:Knob x:Name="knob2" Height ="70" Width="70" Margin="40,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
                 <TextBox x:Name="bpmTextBox2" Text="BPM: " Margin="0,-40,0,0" HorizontalAlignment="Center" LostFocus="textChangedBPMTextBox2" />
-                <TextBlock Name ="songOnDeck2" Text="---------------" Margin="0,-20,0,0"  HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                <TextBox Name ="songOnDeck2" Text="---------------" Margin="0,-20,0,0"  HorizontalAlignment="Center" VerticalAlignment="Top"/>
                 <Button Width="50" Height="50" Margin="-110,70,0,0" HorizontalAlignment="Center" Click="playButton2_Click">
                     <Image Source="C:\Users\Janusz\Desktop\playButton.png" />
                 </Button>
@@ -173,7 +173,7 @@
                 </Slider>
                 <TextBlock Name="actualTime2" Width="50" Height="50" Margin="-320,100,0,0"  />
                 <Canvas x:Name="canvas2" Width="250" Height="100" Background="White" Margin="0,-125,0,0"/>
-                <controls:knobToCut x:Name="knobToCut2" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
+                <controls:KnobToCut x:Name="knobToCut2" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
 
                 <Canvas Name="previewCanvas2" Width="150" Height="50" Background="White" Margin="0,20,0,0" />
                 <TextBlock Name="durationTime2" Width="50" Height="50" Margin="320,-280,0,0"/>

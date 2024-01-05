@@ -35,7 +35,8 @@ namespace DjProgram1
 
     public partial class MainWindow : Window
     {
-        DjProgram1.Services.MusicService musicService = new DjProgram1.Services.MusicService();
+        DjProgram1.Services.MusicService musicService1 = new DjProgram1.Services.MusicService();
+        DjProgram1.Services.MusicService musicService2 = new DjProgram1.Services.MusicService();
         List<DjProgram1.Data.AudioFile> audioFiles = new List<DjProgram1.Data.AudioFile>();
         DjProgram1.Data.AudioFile currentAudioFile1 = new DjProgram1.Data.AudioFile();
         DjProgram1.Data.AudioFile currentAudioFile2 = new DjProgram1.Data.AudioFile();
@@ -53,8 +54,14 @@ namespace DjProgram1
         bool waveOut2Playing = false;
         private int lastDeck = 2;
 
+        //przygotowania MVService
+        ViewModelService ViewModelService1;
+        ViewModelService ViewModelService2;
+
+
         //watki
-        ThreadsService threadsService;
+        ThreadsService threadsService1;
+        ThreadsService threadsService2;
         private Task audioLoadingTask1;
         private CancellationTokenSource ctsAudioLoadingTask1;
         private Task audioLoadingTask2;
@@ -94,8 +101,10 @@ namespace DjProgram1
 
         //sprawdzenie zakonczenia procesu
 
-        private bool uploadTrackFinished1 = true;
-        private bool uploadTrackFinished2 = true;
+        public bool uploadTrackFinished1 = true;
+        public bool uploadTrackFinished2 = true;
+
+        public Synchronizer synchronizer = new Synchronizer();
 
         //animacja CD
         private Task animateCD1;
@@ -139,13 +148,16 @@ namespace DjProgram1
         private Task generateTimeStamps1;
         private Task generateTimeStamps2;
 
+
+        private Task refreshListBoxTask;
         
         public MainWindow()
         {
 
             InitializeComponent();
             this.fileService = new FIleService();
-            threadsService = new ThreadsService(musicService, fileService);
+            threadsService1 = new ThreadsService(musicService1, fileService);
+            threadsService2 = new ThreadsService(musicService2, fileService);
             volumeSlider1.Value = 100;
             volumeSlider2.Value = 100;
             imageLoading2.Visibility = Visibility.Hidden;
@@ -158,9 +170,10 @@ namespace DjProgram1
 
             knobToCut1.LockKnobRotation();
             knobToCut2.LockKnobRotation();
-            knobToCut1.Initialize(canvas1, musicService.progressIndicator1, actualTime1);
-            knobToCut2.Initialize(canvas2, musicService.progressIndicator2, actualTime2);
+            knobToCut1.Initialize(canvas1, musicService1.progressIndicator, actualTime1);
+            knobToCut2.Initialize(canvas2, musicService2.progressIndicator, actualTime2);
             this.Closing += MainWindow_Closing;
+
         }
 
 
@@ -184,240 +197,17 @@ namespace DjProgram1
         private async void buttonUpload2_Click(object sender, RoutedEventArgs e)
         {
             selectedIndex = songList.SelectedIndex;
-            if (songList.SelectedItem != null)
-            {  
-                if (selectedIndex >= 0 && selectedIndex < audioFiles.Count)
-                {
 
-                    if (uploadTrackFinished1 == false || uploadTrackFinished2 == false)
-                    {
-                        return;
-                    }
-
-                    if (currentAudioFile2 == audioFiles[selectedIndex])
-                    {
-                        return;
-                    }
-                    if (audioLoadingTask2 != null && !audioLoadingTask2.IsCompleted)
-                    {
-                        ctsAudioLoadingTask2.Cancel();
-                        waveOut2.Stop();
-                        await audioLoadingTask2;
-                    }
-                    if (waveOut2Playing == true)
-                    {
-                        waveOut2.Stop();
-                        waveOut2Playing = false;
-                    }
-                    isWaveformGenerated2 = false;
-                    if (waveOut2 != null)
-                        waveOut2.Stop();
-
-                    if (ctsMoveLineWaveForm2 != null)
-                        ctsMoveLineWaveForm2.Cancel();
-
-                    imageLoading2.Visibility = Visibility.Visible;
-                    musicService.animatePhoto(rotateTransformLoading2);
-
-                    uploadTrackFinished2 = false;
-                    readyText2.Foreground = Brushes.Red;
-                    ready2 = false;
-
-                    positionOfLine2 = 0;
-                    currentAudioFile2 = audioFiles[selectedIndex];
-                    songOnDeck2.Text = currentAudioFile2.FileName;
-
-                    
-                    bpmTextBox2.IsReadOnly = false;
-
-                    bpmTextBox2.Text = "BPM: ";
-                    
-                    ctsAudioLoadingTask2 = new CancellationTokenSource();
-                    audioLoadingTask2 = threadsService.LoadAudioAsync(currentAudioFile2.FilePath, ctsAudioLoadingTask2.Token);
-                    await audioLoadingTask2;
-
-                    audioFileReader2 = new NAudio.Wave.AudioFileReader(currentAudioFile2.FilePath);
-
-
-                    ctsCountBPM2 = new CancellationTokenSource();
-                    pythonEngineisWorking = true;
-                    if (currentAudioFile2.BPM == 0 || currentAudioFile2.BPM == null)
-                    {
-                        countBPM2 = threadsService.CountBPM(currentAudioFile2.FilePath, bpmTextBox2, ctsCountBPM2.Token);
-                        await countBPM2;
-                    }
-                    else
-                    {
-                        bpmTextBox2.Text = "BPM: " + currentAudioFile2.BPM.ToString();
-                    }
-
-
-
-                    pythonEngineisWorking = false;
-
-                    knob2.UnlockKnobRotation();
-
-                    uploadTrackFinished2 = true;
-
-                    waveFormData2 = await threadsService.generateWaveFormData(currentAudioFile2.FilePath);
-                    timeStampsData2 = await threadsService.generateTimeStamps(currentAudioFile2.FilePath);
-
-                    generateWaveformTask2 = threadsService.GenerateInitialWaveForm(waveFormData2,timeStampsData2, canvas2);
-                    await generateWaveformTask2;
-
-                    isWaveformGenerated2 = true;
-
-                    var audioPlayer = new AudioFileReader(currentAudioFile2.FilePath);
-                    changedSongFilePath2 = currentAudioFile2.FilePath;
-
-
-                    double audioDuration = audioPlayer.TotalTime.TotalSeconds;
-
-
-
-                    TimeSpan audioDurationTimeSpan = TimeSpan.FromSeconds(audioDuration);
-                    durationTime2.Text = audioDurationTimeSpan.ToString(@"mm\:ss");
-                    actualTime2.Text = "00:00";
-                    readyText2.Foreground = Brushes.Green;
-                    
-                    ready2 = true;
-
-
-                    knobToCut2.addAtributes(audioFileReader2, waveFormData2, timeStampsData2, 2);
-
-                    string text = bpmTextBox2.Text;
-                    text = text.Replace("BPM: ", "").Trim();
-                    double.TryParse(text, out double bpmValue);
-                    currentAudioFile2.BPM = bpmValue;
-
-
-                    musicService.StopRotation(rotateTransformLoading2);
-                    imageLoading2.Visibility = Visibility.Hidden;
-                    knobToCut2.UnlockKnobRotation();
-
-
-                }
-            }
+            ViewModelService2.UploadTrack(selectedIndex);
+            
 
 
         }
         private async void buttonUpload1_Click(object sender, RoutedEventArgs e)
         {
             selectedIndex = songList.SelectedIndex;
-            if (songList.SelectedItem != null)
-            {
-
-                if (selectedIndex >= 0 && selectedIndex < audioFiles.Count)
-                {
-
-
-                    
-                    if (uploadTrackFinished1 == false || uploadTrackFinished2 == false)
-                    {
-                        return;
-                    }
-                    if (currentAudioFile1 == audioFiles[selectedIndex])
-                    {
-                        return;
-                    }
-                    if (audioLoadingTask1 != null && !audioLoadingTask1.IsCompleted)
-                    {
-                        ctsAudioLoadingTask1.Cancel();
-                        waveOut1.Stop();
-                        await audioLoadingTask1; // Poczekaj na zakończenie
-                    }
-                    if (waveOut1Playing == true)
-                    {
-
-                        waveOut1.Stop();
-                        waveOut1Playing = false;
-                    }
-                    positionOfLine1 = 0;
-                    isWaveformGenerated1 = false;
-                    if (ctsMoveLineWaveForm1 != null)
-                        ctsMoveLineWaveForm1.Cancel();
-                    if (waveOut1 != null)
-                        waveOut1.Stop();
-                    imageLoading1.Visibility = Visibility.Visible;
-                    musicService.animatePhoto(rotateTransformLoading1);
-                    readyText1.Foreground = Brushes.Red;
-                    ready1 = false;
-
-
-                    uploadTrackFinished1 = false;
-
-                    currentAudioFile1 = audioFiles[selectedIndex];
-
-                    songOnDeck1.Text = currentAudioFile1.FileName;
-                    
-                    bpmTextBox1.Text = "BPM: ";
-
-                    bpmTextBox1.IsReadOnly = false;
-
-                    ctsAudioLoadingTask1 = new CancellationTokenSource();
-                    audioLoadingTask1 = threadsService.LoadAudioAsync(currentAudioFile1.FilePath, ctsAudioLoadingTask1.Token);
-                    await audioLoadingTask1;
-
-                    audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
-
-
-                    
-
-                    ctsCountBPM1 = new CancellationTokenSource();
-                    
-                    pythonEngineisWorking = true;
-                    if(currentAudioFile1.BPM == 0 || currentAudioFile1.BPM == null)
-                    {
-                        countBPM1 = threadsService.CountBPM(currentAudioFile1.FilePath, bpmTextBox1, ctsCountBPM1.Token);
-                        await countBPM1;
-                    }
-                    else
-                    {
-                        bpmTextBox1.Text = "BPM: " + currentAudioFile1.BPM.ToString();
-                    }
-                    
-                    pythonEngineisWorking = false;
-
-                    knob1.UnlockKnobRotation();
-
-
-
-                    uploadTrackFinished1 = true;
-                    waveFormData1 = await threadsService.generateWaveFormData(currentAudioFile1.FilePath);
-                    timeStampsData1 = await threadsService.generateTimeStamps(currentAudioFile1.FilePath);
-
-
-                    generateWaveformTask1 = threadsService.GenerateInitialWaveForm(waveFormData1,timeStampsData1, canvas1);
-                    await generateWaveformTask1;
-
-                    isWaveformGenerated1 = true;
-
-                    var audioPlayer = new AudioFileReader(currentAudioFile1.FilePath);
-                    changedSongFilePath1 = currentAudioFile1.FilePath;
-
-                    double audioDuration = audioPlayer.TotalTime.TotalSeconds;
-
-                    TimeSpan audioDurationTimeSpan = TimeSpan.FromSeconds(audioDuration);
-                    durationTime1.Text = audioDurationTimeSpan.ToString(@"mm\:ss");
-                    actualTime1.Text = "00:00";
-                    readyText1.Foreground = Brushes.Green;
-
-                    ready1 = true;
-
-                    //setRectangleOnWaveForm(currentAudioFile1.FilePath, canvas1);
-
-                    knobToCut1.addAtributes(audioFileReader1, waveFormData1, timeStampsData1, 1);
-
-                    musicService.StopRotation(rotateTransformLoading1);
-                    imageLoading1.Visibility = Visibility.Hidden;
-                    string text = bpmTextBox1.Text;
-                    text = text.Replace("BPM: ", "").Trim();
-                    double.TryParse(text, out double bpmValue);
-                    currentAudioFile1.BPM = bpmValue;
-                    knobToCut1.UnlockKnobRotation();
-
-                }
-            }
+            ViewModelService1.UploadTrack(selectedIndex);
+            
         }
         private async void buttonUploadFiles_Click(object sender, RoutedEventArgs e)
         {
@@ -430,6 +220,9 @@ namespace DjProgram1
                 string folderPath = dialog.SelectedPath; 
 
                 audioFiles = fileService.uploadSongs(audioFiles, folderPath, songList);
+                this.ViewModelService1 = new ViewModelService(audioFiles, fileService,songList, canvas1, knobToCut1, knob1, bpmTextBox1, songOnDeck1, actualTime1, durationTime1, rotateTransformLoading1, rotateTransformCD1,imageLoading1, readyText1, volumeSlider1, synchronizer);
+                this.ViewModelService2 = new ViewModelService(audioFiles, fileService, songList, canvas2, knobToCut2, knob2, bpmTextBox2, songOnDeck2, actualTime2, durationTime2, rotateTransformLoading2, rotateTransformCD2, imageLoading2, readyText2, volumeSlider2, synchronizer);
+
             }
         }
 
@@ -461,511 +254,74 @@ namespace DjProgram1
 
         private async void playButton1_Click(object sender, RoutedEventArgs e)
         {
-            if (waveOut1 == null && isWaveformGenerated1 == true)
-            {
-                
-                
-                if ((changedSongFilePath1 != currentAudioFile1.FilePath) && ready1== true)
-                {
-
-                    knobToCut1.LockKnobRotation();
-
-                    ctsMoveLineWaveForm1 = new CancellationTokenSource();
-                    audioFileReader1 = new NAudio.Wave.AudioFileReader(changedSongFilePath1);
-
-                    waveOut1 = new NAudio.Wave.WaveOut();
-                    
-
-                    waveOut1.Init(audioFileReader1);
-
-                    waveOut1.PlaybackStopped += OnPlaybackStopped1;
-
-                    waveOut1.Volume = 1.0f;
-
-
-                    waveOut1Playing = true;
-
-                    musicService.InitTimer(timer1, actualTime1, audioFileReader1,1);
-                    timer1.Start();
-                    waveOut1.Play();
-                    //moveLineWaveForm1 = threadsService.MovePositionLine(canvas1, currentAudioFile1.FilePath, actualTime1, durationTime1, ctsMoveLineWaveForm1.Token, positionOfLine1, timer1);
-                    //await moveLineWaveForm1;
-
-                    moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1, ctsMoveLineWaveForm1.Token);
-
-                    musicService.animatePhoto(rotateTransformCD1);
-                    
-                }
-                else if ((changedSongFilePath1 == currentAudioFile1.FilePath) && ready1 == true)
-                {
-                    knob1.LockKnobRotation();
-                    knobToCut1.LockKnobRotation();
-
-                    bpmTextBox1.IsReadOnly = true;
-                    string text = bpmTextBox1.Text;
-                    text = text.Replace("BPM: ", "").Trim();
-                    double newBPM = double.Parse(text);
-                    if (newBPM != currentAudioFile1.BPM)
-                    {
-                        bpmTextBox1.Text = "BPM: " + currentAudioFile1.BPM.ToString();
-                    }
-
-                    ctsMoveLineWaveForm1 = new CancellationTokenSource();
-                    //audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
-                    waveOut1 = new NAudio.Wave.WaveOut();
-                 
-
-
-                    waveOut1.Init(audioFileReader1);
-                    waveOut1.PlaybackStopped += OnPlaybackStopped1;
-
-                    waveOut1.Volume = 1.0f;
-
-                    waveOut1Playing = true;
-
-                    musicService.InitTimer(timer1, actualTime1, audioFileReader1, 1);
-                    timer1.Start();
-
-                    waveOut1.Play();
-
-                    //moveLineWaveForm1 = threadsService.MovePositionLine(canvas1, currentAudioFile1.FilePath, actualTime1, durationTime1, ctsMoveLineWaveForm1.Token, positionOfLine1, timer1);
-
-                    moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1, ctsMoveLineWaveForm1.Token);
-
-
-                    musicService.animatePhoto(rotateTransformCD1);
-                }
-                    
-                
-                
-
-                
-                
-            }
-
-            else if (waveOut1 != null && waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Paused)
-            {
-                timer1.Start();
-                waveOut1.Play();
-                ctsMoveLineWaveForm1 = new CancellationTokenSource();
-                //moveLineWaveForm1 = threadsService.MovePositionLine(canvas1, currentAudioFile1.FilePath, actualTime1, durationTime1, ctsMoveLineWaveForm1.Token, positionOfLine1, timer1);
-                moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1, ctsMoveLineWaveForm1.Token);
-
-
-                musicService.animatePhoto(rotateTransformCD1);
-                waveOut1Playing = true;
-            }
-            else if (waveOut1 != null && waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Stopped)
-            {
-                waveOut1.Dispose(); 
-                audioFileReader1.Dispose(); 
-                audioFileReader1 = new NAudio.Wave.AudioFileReader(currentAudioFile1.FilePath);
-                waveOut1 = new NAudio.Wave.WaveOut();
-                waveOut1.Init(audioFileReader1);
-
-                waveOut1.PlaybackStopped += OnPlaybackStopped1;
-
-
-                timer1.Start();
-                waveOut1.Play();
-
-                ctsMoveLineWaveForm1 = new CancellationTokenSource();
-                //moveLineWaveForm1 = threadsService.MovePositionLine(canvas1, currentAudioFile1.FilePath, actualTime1, durationTime1, ctsMoveLineWaveForm1.Token, positionOfLine1, timer1);
-                moveLineWaveForm1 = threadsService.UpdateWaveformAsync(canvas1, audioFileReader1, waveFormData1, timeStampsData1, audioFileReader1.TotalTime.TotalSeconds, 1, ctsMoveLineWaveForm1.Token);
-
-
-                musicService.animatePhoto(rotateTransformCD1);
-                waveOut1Playing = true;
-            }
+            ViewModelService1.PlayTrack();
+            
         }
 
         private async void playButton2_Click(object sender, RoutedEventArgs e)
         {
-            if (waveOut2 == null && isWaveformGenerated2 == true)
-            {
-                
-                if((changedSongFilePath2 != currentAudioFile2.FilePath)&&ready2 == true)
-                {
-                    knobToCut2.LockKnobRotation();
-
-                    ctsMoveLineWaveForm2 = new CancellationTokenSource();
-                    //audioFileReader2 = new NAudio.Wave.AudioFileReader(changedSongFilePath2);
-                    waveOut2 = new NAudio.Wave.WaveOut();
-                    waveOut2.Init(audioFileReader2);
-
-                    waveOut2.PlaybackStopped += OnPlaybackStopped2;
-
-
-                    waveOut2.Volume = 1.0f;
-
-                    musicService.InitTimer(timer2, actualTime2, audioFileReader2, 2);
-                    timer2.Start();
-                    waveOut2.Play();
-                    //moveLineWaveForm2 = threadsService.MovePositionLine(canvas2, currentAudioFile2.FilePath, actualTime2, durationTime2, ctsMoveLineWaveForm2.Token, positionOfLine2, timer2);
-                    moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds, 2, ctsMoveLineWaveForm2.Token);
-
-                    waveOut2Playing = true;
-
-
-                    musicService.animatePhoto(rotateTransformCD2);
-                }
-                else if((changedSongFilePath2 == currentAudioFile2.FilePath) && ready2 == true)
-                {
-                    knobToCut2.LockKnobRotation();
-
-
-                    knob2.LockKnobRotation();
-                    bpmTextBox2.IsReadOnly = true;
-                    string text = bpmTextBox2.Text;
-                    text = text.Replace("BPM: ", "").Trim();
-                    double newBPM = double.Parse(text);
-                    if(newBPM != currentAudioFile2.BPM)
-                    {
-                        bpmTextBox2.Text = "BPM: " + currentAudioFile2.BPM.ToString();
-                    }
-
-                    ctsMoveLineWaveForm2 = new CancellationTokenSource();
-                    audioFileReader2 = new NAudio.Wave.AudioFileReader(currentAudioFile2.FilePath);
-                    waveOut2 = new NAudio.Wave.WaveOut();
-
-
-                    waveOut2.Init(audioFileReader2);
-
-                    waveOut2.PlaybackStopped += OnPlaybackStopped2;
-
-
-                    waveOut2.Volume = 1.0f;
-
-                    musicService.InitTimer(timer2, actualTime2, audioFileReader2, 2);
-
-                    timer2.Start();
-                    waveOut2.Play();
-                    //moveLineWaveForm2 = threadsService.MovePositionLine(canvas2, currentAudioFile2.FilePath, actualTime2, durationTime2, ctsMoveLineWaveForm2.Token, positionOfLine2, timer2);
-                    moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds, 2, ctsMoveLineWaveForm2.Token);
-
-
-                    waveOut2Playing = true;
-                    
-                    musicService.animatePhoto(rotateTransformCD2);
-                }
-                
-                
-            }
-            else if (waveOut2 != null && waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Paused)
-            {
-                timer2.Start();
-                waveOut2.Play();
-                ctsMoveLineWaveForm2 = new CancellationTokenSource();
-
-                moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds, 2, ctsMoveLineWaveForm2.Token);
-
-                //await moveLineWaveForm2;
-                musicService.animatePhoto(rotateTransformCD2);
-
-                waveOut2Playing = true;
-            }
-            else if (waveOut2 != null && waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Stopped)
-            {
-                waveOut2.Dispose(); // Zwolnij zasoby
-                audioFileReader2.Dispose(); // Zwolnij zasoby
-                audioFileReader2 = new NAudio.Wave.AudioFileReader(currentAudioFile2.FilePath);
-                waveOut2 = new NAudio.Wave.WaveOut();
-                waveOut2.Init(audioFileReader2);
-                waveOut2.PlaybackStopped += OnPlaybackStopped2;
-
-
-                timer2.Start();
-                waveOut2.Play();
-                ctsMoveLineWaveForm2 = new CancellationTokenSource();
-                moveLineWaveForm2 = threadsService.UpdateWaveformAsync(canvas2, audioFileReader2, waveFormData2, timeStampsData2, audioFileReader2.TotalTime.TotalSeconds,2, ctsMoveLineWaveForm2.Token);
-
-                //await moveLineWaveForm2;
-
-                musicService.animatePhoto(rotateTransformCD2);
-                waveOut2Playing = true;
-            }
+            ViewModelService2.PlayTrack();
+            
         }
 
         private void pauseButton1_Click(object sender, RoutedEventArgs e)
         {
-            if (waveOut1 != null && waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Playing)
-            {
-                if (ctsMoveLineWaveForm1 != null)
-                    ctsMoveLineWaveForm1.Cancel();
-                timer1.Stop();
-                waveOut1.Pause();
-                musicService.StopRotation(rotateTransformCD1);
-                waveOut1Playing = false;
-            }
+            ViewModelService1.PauseTrack();
+            
         }
 
         private void pauseButton2_Click(object sender, RoutedEventArgs e)
         {
-            if (waveOut2 != null && waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Playing)
-            {
-                if (ctsMoveLineWaveForm2 != null)
-                    ctsMoveLineWaveForm2.Cancel();
-                
-                timer2.Stop();
-                waveOut2.Pause();
-                musicService.StopRotation(rotateTransformCD2);
-                waveOut2Playing = false;
-            }
+            ViewModelService2.PauseTrack();
+
         }
 
-        private void stopButton1_Click(object sender, RoutedEventArgs e)
+        private async void stopButton1_Click(object sender, RoutedEventArgs e)
         {
-            if (waveOut1 != null && waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Playing || waveOut1.PlaybackState == NAudio.Wave.PlaybackState.Paused)
-            {
+            ViewModelService1.StopTrack();
 
-                actualTime1.Text = "00:00";
-
-                timer1.Stop();
-                waveOut1.Pause();
-                waveOut1.Stop();
-                if (ctsMoveLineWaveForm1 != null)
-                    ctsMoveLineWaveForm1.Cancel();
-
-                musicService.StopRotation(rotateTransformCD1);
-
-                positionOfLine1 = 0;
-                waveOut1Playing = false;
-
-                Line positionLine = canvas1.Children.OfType<Line>().FirstOrDefault();
-                if (positionLine != null)
-                {
-                    positionLine.X1 = 0;
-                    positionLine.X2 = 0;
-                }
-                // Reset actualTime to 00:00
-                actualTime1.Text = "00:00";
-            }
         }
-        private void stopButton2_Click(object sender, RoutedEventArgs e)
+        private async void stopButton2_Click(object sender, RoutedEventArgs e)
         {
-            if (waveOut2 != null && waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Playing || waveOut2.PlaybackState == NAudio.Wave.PlaybackState.Paused)
-            {
-                actualTime2.Text = "00:00";
+            ViewModelService2.StopTrack();
 
-                timer2.Stop();
-                
-                waveOut2.Pause();
-
-               waveOut2.Stop();
-               if (ctsMoveLineWaveForm2 != null)
-                  ctsMoveLineWaveForm2.Cancel();
-
-               musicService.StopRotation(rotateTransformCD2);
-
-               positionOfLine2 = 0;
-               waveOut2Playing = false;
-               Line positionLine = canvas2.Children.OfType<Line>().FirstOrDefault();
-               if (positionLine != null)
-               {
-                   positionLine.X1 = 0;
-                   positionLine.X2 = 0;
-               }
-                // Reset actualTime to 00:00
-                actualTime2.Text = "00:00";
-            }
         }
 
         private void volumeSlider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (waveOut1 != null)
+            if(ViewModelService1 != null)
             {
-                waveOut1.Volume = (float)volumeSlider1.Value / 100;
+                ViewModelService1.VolumeSliderChanged();
+
             }
         }
 
         private void volumeSlider2_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (waveOut2 != null)
+            if (ViewModelService2 != null)
             {
-                waveOut2.Volume = (float)volumeSlider2.Value / 100;
+                ViewModelService2.VolumeSliderChanged();
+
             }
         }
 
         private async void synchroButton1_Click(object sender, RoutedEventArgs e)
         {
-            if((ready1 = true && bpmTextBox2.Text!="BPM: ")&&bpmTextBox1.IsReadOnly == false && pythonEngineisWorking == false)
-            {
-
-
-                knobToCut1.LockKnobRotation();
-
-                bpmTextBox1.Text = bpmTextBox2.Text;
-                string text = bpmTextBox1.Text;
-                text = text.Replace("BPM: ", "").Trim();
-                double newBPM = double.Parse(text);
-                if (newBPM != currentAudioFile1.BPM)
-                {
-                    ready1 = false;
-                    readyText1.Foreground = Brushes.Red;
-                    deleteTrack = threadsService.deleteCopiedTrack(currentAudioFile1.FileName);
-                    await deleteTrack;
-                    deleteOldCopies = threadsService.deleteCopies();
-
-                    ctsChangeBPM1 = new CancellationTokenSource();
-
-                    pythonEngineisWorking = true;
-                    changedSongFilePath1 = await threadsService.changeBPM(currentAudioFile1.FilePath, (double)currentAudioFile1.BPM, newBPM, ctsChangeBPM1.Token);
-
-                    waveFormData1 = await threadsService.generateWaveFormData(changedSongFilePath1);
-                    timeStampsData1 = await threadsService.generateTimeStamps(changedSongFilePath1);
-
-
-                    generateWaveformTask1 = threadsService.GenerateInitialWaveForm(waveFormData1, timeStampsData1, canvas1);
-                    await generateWaveformTask1;
-
-                    audioFileReader1 = new AudioFileReader(changedSongFilePath1);
-                    knobToCut1.addAtributes(audioFileReader1, waveFormData1, timeStampsData1, 1);
-
-                    pythonEngineisWorking = false;
-
-
-
-                    readyText1.Foreground = Brushes.Green;
-                    knob1.LockKnobRotation();
-                    bpmTextBox1.IsReadOnly = true;
-                    ready1 = true;
-                }
-                knobToCut2.UnlockKnobRotation();
-            }
+            ViewModelService1.SynchronizeTrack(bpmTextBox2);
         }
         private async void synchroButton2_Click(object sender, RoutedEventArgs e)
         {
-
-            
-            if (ready2 = true && bpmTextBox1.Text != "BPM: "&& pythonEngineisWorking == false) 
-            {
-                knobToCut2.LockKnobRotation();
-                bpmTextBox2.Text = bpmTextBox1.Text;
-                string text = bpmTextBox2.Text;
-                text = text.Replace("BPM: ", "").Trim();
-                double newBPM = double.Parse(text);
-                if (newBPM != currentAudioFile2.BPM)
-                {
-                    ready2 = false;
-                    readyText2.Foreground = Brushes.Red;
-                    deleteTrack = threadsService.deleteCopiedTrack(currentAudioFile2.FileName);
-                    await deleteTrack;
-                    deleteOldCopies = threadsService.deleteCopies();
-                    ctsChangeBPM2 = new CancellationTokenSource();
-
-                    pythonEngineisWorking = true;
-                    changedSongFilePath2 = await threadsService.changeBPM(currentAudioFile2.FilePath, (double)currentAudioFile2.BPM, newBPM, ctsChangeBPM2.Token);
-
-                    waveFormData2 = await threadsService.generateWaveFormData(changedSongFilePath2);
-                    timeStampsData2 = await threadsService.generateTimeStamps(changedSongFilePath2);
-
-
-                    generateWaveformTask2 = threadsService.GenerateInitialWaveForm(waveFormData2, timeStampsData2, canvas2);
-                    await generateWaveformTask2;
-
-                    audioFileReader2 = new AudioFileReader(changedSongFilePath2);
-                    knobToCut2.addAtributes(audioFileReader2, waveFormData2, timeStampsData2, 2);
-
-                    isWaveformGenerated1 = true;
-
-                    pythonEngineisWorking = false;
-
-
-
-                    readyText2.Foreground = Brushes.Green;
-                    knob2.LockKnobRotation();
-                    bpmTextBox2.IsReadOnly = true;
-                    ready2 = true;
-                }
-                knobToCut2.UnlockKnobRotation();
-            }
+            ViewModelService2.SynchronizeTrack(bpmTextBox1);
         }
 
         private async void changeBPM1_Click(object sender, RoutedEventArgs e)
         {
-            
-            if(bpmTextBox1.IsReadOnly == true)
-            {
-                return;
-            }
-            knobToCut1.LockKnobRotation();
-
-            string text = bpmTextBox1.Text;
-            text = text.Replace("BPM: ", "").Trim();
-            double newBPM = double.Parse(text);
-            if (newBPM != currentAudioFile1.BPM && pythonEngineisWorking==false)
-            {
-                ready1 = false;
-                readyText1.Foreground = Brushes.Red;
-                deleteTrack = threadsService.deleteCopiedTrack(currentAudioFile1.FileName);
-                await deleteTrack;
-                deleteOldCopies = threadsService.deleteCopies();
-
-                ctsChangeBPM1 = new CancellationTokenSource();
-
-                pythonEngineisWorking = true;
-                changedSongFilePath1 = await threadsService.changeBPM(currentAudioFile1.FilePath, (double)currentAudioFile1.BPM, newBPM, ctsChangeBPM1.Token);
-
-                waveFormData1 = await threadsService.generateWaveFormData(changedSongFilePath1);
-                timeStampsData1 = await threadsService.generateTimeStamps(changedSongFilePath1);
-
-
-                generateWaveformTask1 = threadsService.GenerateInitialWaveForm(waveFormData1, timeStampsData1, canvas1);
-                await generateWaveformTask1;
-
-                audioFileReader1 = new AudioFileReader(changedSongFilePath1);
-                knobToCut1.addAtributes(audioFileReader1, waveFormData1, timeStampsData1, 1);
-
-
-                pythonEngineisWorking = false;
-                
-                readyText1.Foreground = Brushes.Green;
-                knob1.LockKnobRotation();
-                bpmTextBox1.IsReadOnly = true;
-                ready1 = true;
-            }
-            knobToCut1.UnlockKnobRotation();
-            
-
+            ViewModelService1.ChangeBPM();
         }
 
         private async void changeBPM2_Click(object sender, RoutedEventArgs e)
         {
-
-            knobToCut1.LockKnobRotation();
-            string text = bpmTextBox2.Text;
-            text = text.Replace("BPM: ", "").Trim();
-            double newBPM = double.Parse(text);
-            if (newBPM != currentAudioFile2.BPM && pythonEngineisWorking == false)
-            {
-                ready2 = false;
-                readyText2.Foreground = Brushes.Red;
-                deleteTrack = threadsService.deleteCopiedTrack(currentAudioFile2.FileName);
-                await deleteTrack;
-                deleteOldCopies = threadsService.deleteCopies();
-                ctsChangeBPM2 = new CancellationTokenSource();
-
-                pythonEngineisWorking = true;
-                changedSongFilePath2 = await threadsService.changeBPM(currentAudioFile2.FilePath, (double)currentAudioFile2.BPM, newBPM, ctsChangeBPM2.Token);
-
-                waveFormData2 = await threadsService.generateWaveFormData(changedSongFilePath2);
-                timeStampsData2 = await threadsService.generateTimeStamps(changedSongFilePath2);
-
-
-                generateWaveformTask2 = threadsService.GenerateInitialWaveForm(waveFormData2, timeStampsData2, canvas2);
-                await generateWaveformTask2;
-
-                audioFileReader2 = new AudioFileReader(changedSongFilePath2);
-                knobToCut2.addAtributes(audioFileReader2, waveFormData2, timeStampsData2, 2);
-
-                pythonEngineisWorking = false;
-                
-                readyText2.Foreground = Brushes.Green;
-                knob2.LockKnobRotation();
-                bpmTextBox2.IsReadOnly = true;
-                ready2 = true;
-            }
-            knobToCut2.UnlockKnobRotation();
+            ViewModelService2.ChangeBPM();
 
         }
 
@@ -993,16 +349,6 @@ namespace DjProgram1
             {
                 bpmTextBox2.Text = "BPM: " + newBpm;
             }
-        }
-
-        private void OnPlaybackStopped1(object sender, NAudio.Wave.StoppedEventArgs args)
-        {
-            ctsMoveLineWaveForm1.Cancel();
-        }
-        private void OnPlaybackStopped2(object sender, NAudio.Wave.StoppedEventArgs args)
-        {
-            ctsMoveLineWaveForm2.Cancel();
-
         }
 
 

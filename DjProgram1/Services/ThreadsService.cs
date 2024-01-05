@@ -110,7 +110,7 @@ namespace DjProgram1.Services
 
         }
 
-        public async Task UpdateWaveformAsync(Canvas waveformCanvas, AudioFileReader reader, List<double> audioSamples, List<double> timeStamps, double totalDuration, int whichOne, CancellationToken cancellationToken)
+        public async Task UpdateWaveformAsync(Canvas waveformCanvas, AudioFileReader reader, List<double> audioSamples, List<double> timeStamps, double totalDuration, CancellationToken cancellationToken)
         {
             double sampleDisplayInterval = totalDuration / audioSamples.Count;
             while (true)
@@ -129,7 +129,7 @@ namespace DjProgram1.Services
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    musicService.UpdateWaveformAndIndicator(currentPosition, totalDuration, waveformCanvas, audioSamples, timeStamps, whichOne);
+                    musicService.UpdateWaveformAndIndicator(currentPosition, totalDuration, waveformCanvas, audioSamples, timeStamps);
                 });
             }
         }
@@ -194,6 +194,7 @@ namespace DjProgram1.Services
             {
                 return newFilePath = null;
             }
+            
             return newFilePath;
         }
 
@@ -238,6 +239,20 @@ namespace DjProgram1.Services
             }
         }
 
+        public async Task refreshList(ListBox lisbox, List<AudioFile> audioFiles)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    fileService.RefreshListBox(lisbox, audioFiles);
+                });
+            }
+            catch
+            {
+
+            }
+        }
         
 
 
