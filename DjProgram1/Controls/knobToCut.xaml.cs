@@ -1,4 +1,4 @@
-﻿using DjProgram1.Services;
+﻿using DjProgram1.Model.Services;
 using NAudio.Wave;
 using System;
 using System.Collections.Generic;
@@ -46,7 +46,7 @@ namespace DjProgram1.Controls
 
 
         TextBlock textBLock;
-        double beatThreshold = 2;
+        double beatThreshold = 1.5;
 
 
 
@@ -70,7 +70,6 @@ namespace DjProgram1.Controls
             totalDuration = reader.TotalTime.TotalSeconds;
             this.audioSamples = audioSamples;
             this.timeStamps = timeStamps;
-            this.whichOne = whichOne;
             beatIntervals = GenerateBeatIntervals(timeStamps, totalDuration);
 
         }
@@ -90,7 +89,7 @@ namespace DjProgram1.Controls
 
         private void UpdateWaveformPosition(double angleDifference)
         {
-            double positionChange = (angleDifference / 720.0) * totalDuration;
+            double positionChange = (angleDifference / 500.0) * totalDuration;
             currentPosition += positionChange;
             currentPosition = Math.Clamp(currentPosition, 0, totalDuration);
 
@@ -233,7 +232,10 @@ namespace DjProgram1.Controls
             Mouse.Capture(null);
         }
 
-        
+        public void SetProgressIndicatorToStart()
+        {
+            currentPosition = 0;
+        }
     }
 }
 

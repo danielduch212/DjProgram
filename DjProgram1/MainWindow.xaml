@@ -63,11 +63,6 @@
                     <TextBlock Text="Wgraj" />
                 </StackPanel>
             </Button>
-            <Button Margin="10,-17,0,0" Width="100" Click="prepare_track_click">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Przygotuj" />
-                </StackPanel>
-            </Button>
             <Button Margin="10,-17,-400,0" Width="100" Click="buttonUpload2_Click">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Wgraj" />
