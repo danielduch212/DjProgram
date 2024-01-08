@@ -46,7 +46,7 @@ namespace DjProgram1.Controls
 
 
         TextBlock textBLock;
-        double beatThreshold = 1.5;
+        double beatThreshold = 0.2;
 
 
 
@@ -71,6 +71,7 @@ namespace DjProgram1.Controls
             this.audioSamples = audioSamples;
             this.timeStamps = timeStamps;
             beatIntervals = GenerateBeatIntervals(timeStamps, totalDuration);
+            
 
         }
         public List<double> GenerateBeatIntervals(List<double> timeStamps, double totalDuration)
@@ -101,7 +102,7 @@ namespace DjProgram1.Controls
             TimeSpan time = TimeSpan.FromSeconds(currentTimeInSeconds);
             textBLock.Text = time.ToString(@"mm\:ss");
 
-            musicService.UpdateWaveformByKnob(currentPosition / totalDuration, totalDuration, waveFormCanvas, audioSamples, timeStamps);
+            musicService.UpdateWaveformByKnob1(currentPosition / totalDuration, totalDuration, waveFormCanvas, audioSamples, beatIntervals);
         }
 
 

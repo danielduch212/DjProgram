@@ -52,10 +52,6 @@ namespace DjProgram1.Model.Services
 
                 if (cancellationToken.IsCancellationRequested)
                     return;
-
-
-
-
             }
             catch (OperationCanceledException)
             {

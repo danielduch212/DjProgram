@@ -436,6 +436,7 @@ namespace DjProgram1.ViewModel
         {
             if (ready && oppositeBpmTextBox.Text != "BPM: " && bpmTextBox.IsReadOnly == false && !synchronizer.pythonEngineIsRunning)
             {
+                knob.LockKnobRotation();
                 knobToCut.LockKnobRotation();
 
                 bpmTextBox.Text = oppositeBpmTextBox.Text;
@@ -468,7 +469,6 @@ namespace DjProgram1.ViewModel
                     synchronizer.pythonEngineIsRunning = false;
 
                     readyText.Foreground = Brushes.Green;
-                    knob.LockKnobRotation();
                     bpmTextBox.IsReadOnly = true;
                     knobToCut.SetProgressIndicatorToStart();
 
@@ -491,6 +491,7 @@ namespace DjProgram1.ViewModel
             }
             ready = false;
             knobToCut.LockKnobRotation();
+            knob.LockKnobRotation();
 
             string text = bpmTextBox.Text;
             text = text.Replace("BPM: ", "").Trim();
@@ -522,10 +523,9 @@ namespace DjProgram1.ViewModel
                 synchronizer.pythonEngineIsRunning = false;
 
                 readyText.Foreground = Brushes.Green;
-                knob.LockKnobRotation();
                 bpmTextBox.IsReadOnly = true;
                 knobToCut.SetProgressIndicatorToStart();
-
+                actualTime.Text = "00:00";
             }
             ready = true;
             knobToCut.UnlockKnobRotation();
@@ -549,6 +549,7 @@ namespace DjProgram1.ViewModel
 
         }
 
+        //wykrywanie zlych plikow
 
 
     }

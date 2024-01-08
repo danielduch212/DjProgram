@@ -83,14 +83,6 @@ namespace DjProgram1
                 fileService.DeleteAllCopies();
             }
         }
-        
-
-        private void ListBox_MouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            var scrollViewer = sender as ScrollViewer;
-            scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - e.Delta);
-            e.Handled = true;
-        }
 
         private async void buttonUpload2_Click(object sender, RoutedEventArgs e)
         {

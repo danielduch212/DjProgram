@@ -38,10 +38,10 @@
 
 
         <Border BorderBrush="Black" BorderThickness="2" Padding="5" Grid.Row="1" Margin="0,0,0,0">
-            <ListBox Name="songList" HorizontalContentAlignment="Stretch" MouseWheel="ListBox_MouseWheel" Height="200" Width="767"
-        ScrollViewer.VerticalScrollBarVisibility="Auto"
-        ScrollViewer.PanningMode="Both"
-        ScrollViewer.PanningDeceleration="0.5">
+            <ListBox Name="songList" HorizontalContentAlignment="Stretch" Height="200" Width="767"
+            ScrollViewer.VerticalScrollBarVisibility="Visible"
+            ScrollViewer.PanningMode="Both"
+            ScrollViewer.PanningDeceleration="0.5">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Grid Width="{Binding ElementName=songList, Path=ActualWidth}">

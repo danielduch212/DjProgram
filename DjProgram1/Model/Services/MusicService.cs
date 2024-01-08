@@ -99,7 +99,6 @@ namespace DjProgram1.Model.Services
                 {
                     double sampleHeight = audioSamples[i] * canvasHeight;
 
-                    // Czarna linia reprezentująca próbkę audio
                     Rectangle rect = new Rectangle
                     {
                         Width = Math.Max(barWidth - 1, 1),
@@ -110,27 +109,40 @@ namespace DjProgram1.Model.Services
                     Canvas.SetLeft(rect, i * barWidth);
                     Canvas.SetTop(rect, (canvasHeight - sampleHeight) / 2);
                     waveformCanvas.Children.Add(rect);
+                }
 
-                    if (timeStamps.Any(ts => Math.Abs(ts - i * sampleDuration) < sampleDuration))
+                List<double> beatIntervals = new List<double>();
+                double interval = getInterval(timeStamps);
+                if (interval > 0)
+                {
+                    double lastTimeStamp = timeStamps.Last();
+                    for (double beat = timeStamps[0]; beat <= lastTimeStamp; beat += interval)
                     {
-                        beatCounter++;
-                        if (beatCounter % beatDisplayInterval == 0)
-                        {
-                            var line = new Line
-                            {
-                                X1 = i * barWidth,
-                                X2 = i * barWidth,
-                                Y1 = 0,
-                                Y2 = canvasHeight,
-                                Stroke = Brushes.DarkGray,
-                                StrokeThickness = 2
-                            };
-                            waveformCanvas.Children.Add(line);
-                        }
+                        beatIntervals.Add(beat);
                     }
+                }
+                List<double> foundTimeStamps = beatIntervals
+                .Where(ts => ts >= 0 && ts <= 30)
+                .ToList();
+
+                foreach (double timeStamp in foundTimeStamps)
+                {
+                    double linePosition = timeStamp * (canvasWidth / sampleDuration);
+
+                    
+
+                    Rectangle timeMarkerRect = new Rectangle
+                    {
+                        Width = 2,
+                        Height = canvasHeight,
+                        Fill = Brushes.Green,
+                    };
+                    Canvas.SetLeft(timeMarkerRect, linePosition);
+                    Canvas.SetTop(timeMarkerRect, 0);
+                    waveformCanvas.Children.Add(timeMarkerRect);
 
                 }
-                ProcessBeats(timeStamps);
+              
             });
         }
 
@@ -291,23 +303,24 @@ namespace DjProgram1.Model.Services
         public double getInterval(List<double> timeStamps)
         {
 
-            if (timeStamps.Count >= 4)
-            {
-                if (timeStamps[3] - timeStamps[0] < 1.5)
-                {
-                    return beatInterval = timeStamps[7] - timeStamps[0];
+            //if (timeStamps.Count >= 4)
+            //{
+            //    if (timeStamps[3] - timeStamps[0] < 1.5)
+            //    {
+            //        return beatInterval = timeStamps[7] - timeStamps[0];
 
-                }
-                else
-                {
-                    return beatInterval = timeStamps[3] - timeStamps[0];
+            //    }
+            //    else
+            //    {
+            //        return beatInterval = timeStamps[3] - timeStamps[0];
 
-                }
-            }
-            else
-            {
-                return 0;
-            }
+            //    }
+            //}
+            //else
+            //{
+            //    return 0;
+            //}
+            return beatInterval = timeStamps[3] - timeStamps[0];
 
         }
 
@@ -450,6 +463,88 @@ namespace DjProgram1.Model.Services
             waveformCanvas.Children.Add(progressIndicator);
         }
 
+        public void UpdateWaveformByKnob1(double knobRotation, double totalDuration, Canvas waveformCanvas, List<double> audioSamples, List<double> timeStamps)
+        {
+            double currentPosition = knobRotation * totalDuration;
+
+            int samplesToDisplay = 30 * 2;
+            double canvasWidth = waveformCanvas.ActualWidth;
+            double canvasHeight = waveformCanvas.ActualHeight - 30;
+            double halfCanvasWidth = canvasWidth * 0.5;
+            double barWidth = canvasWidth / samplesToDisplay;
+            double adjustedDuration = Math.Min(30, totalDuration);
+            double sampleRate = audioSamples.Count / totalDuration;
+
+            double indicatorPosition = (currentPosition / adjustedDuration) * canvasWidth;
+            bool shouldMove = indicatorPosition >= halfCanvasWidth;
+            if (shouldMove)
+            {
+                indicatorPosition = halfCanvasWidth;
+
+            }
+            waveformCanvas.Children.Clear();
+
+
+            int startSampleIndex = shouldMove ? (int)(currentPosition * sampleRate) - (samplesToDisplay / 2) : 0;
+            startSampleIndex = Math.Max(0, startSampleIndex);
+
+
+            for (int i = 0; i < samplesToDisplay && (startSampleIndex + i) < audioSamples.Count; i++)
+            {
+                double sampleHeight = audioSamples[startSampleIndex + i] * canvasHeight;
+                Rectangle rect = new Rectangle
+                {
+                    Width = Math.Max(barWidth - 1, 1),
+                    Height = sampleHeight,
+                    Fill = Brushes.Black
+                };
+
+                double rectPosition = shouldMove ? (i * barWidth) : ((startSampleIndex + i) * barWidth);
+                Canvas.SetLeft(rect, rectPosition);
+                Canvas.SetTop(rect, (canvasHeight - sampleHeight) / 2);
+                waveformCanvas.Children.Add(rect);
+            }
+
+            List<double> foundTimeStamps = timeStamps
+                .Where(ts => ts >= (startSampleIndex / 2) && ts <= ((startSampleIndex + samplesToDisplay) / 2))
+                .ToList();
+
+            foreach (double timeStamp in foundTimeStamps)
+            {
+                double adjustedTimeStamp = timeStamp - (startSampleIndex / 2);
+                double linePosition = adjustedTimeStamp * (canvasWidth / adjustedDuration);
+
+                //if (shouldMove)
+                //{
+                //    linePosition = adjustedTimeStamp * (canvasWidth / adjustedDuration);
+                //}
+                //else
+                //{
+                //    continue;
+                //}
+
+                Rectangle timeMarkerRect = new Rectangle
+                {
+                    Width = 2,
+                    Height = canvasHeight,
+                    Fill = Brushes.Green,
+                };
+                Canvas.SetLeft(timeMarkerRect, linePosition);
+                Canvas.SetTop(timeMarkerRect, 0);
+                waveformCanvas.Children.Add(timeMarkerRect);
+
+            }
+
+            Rectangle progressIndicator = new Rectangle
+            {
+                Width = 2,
+                Height = canvasHeight,
+                Fill = Brushes.Red
+            };
+            Canvas.SetLeft(progressIndicator, indicatorPosition);
+            Canvas.SetTop(progressIndicator, 0);
+            waveformCanvas.Children.Add(progressIndicator);
+        }
         public void InitTimer(System.Windows.Forms.Timer timer, TextBlock textBLock, AudioFileReader reader)
         {
             Application.Current.Dispatcher.Invoke(() =>
