@@ -1,18 +1,11 @@
 ﻿using DjProgram1.Model.Data;
-using GLib;
-using NAudio.Wave;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Forms;
 using System.Windows.Media;
-using TagLib;
 using ListBox = System.Windows.Controls.ListBox;
 
 namespace DjProgram1.Model.Services
@@ -121,7 +114,7 @@ namespace DjProgram1.Model.Services
             string currentCatalog = AppDomain.CurrentDomain.BaseDirectory;
             string filePath = Path.Combine(currentCatalog, fileName);
 
-            using (StreamWriter writer = new StreamWriter(filePath, append: false)) 
+            using (StreamWriter writer = new StreamWriter(filePath, append: false))
             {
                 foreach (var audioFile in audioFiles)
                 {
@@ -160,7 +153,7 @@ namespace DjProgram1.Model.Services
                     var parts = line.Split(new[] { "BPM:" }, StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length == 2 && double.TryParse(parts[1].Trim(), out double bpm))
                     {
-                        bpmData[parts[0].Trim()] = bpm; 
+                        bpmData[parts[0].Trim()] = bpm;
                     }
                 }
             }
@@ -270,7 +263,15 @@ namespace DjProgram1.Model.Services
             var directoryInfo = new DirectoryInfo(folderPath);
             foreach (System.IO.FileInfo file in directoryInfo.GetFiles())
             {
-                file.Delete(); 
+                try
+                {
+                    file.Delete();
+
+                }
+                catch (Exception e)
+                {
+
+                }
             }
         }
         public void DeleteCopies()
@@ -346,8 +347,8 @@ namespace DjProgram1.Model.Services
 
                 listBoxItem.Content = grid;
 
-                return listBoxItem; 
-            }) as ListBoxItem; 
+                return listBoxItem;
+            }) as ListBoxItem;
         }
 
 

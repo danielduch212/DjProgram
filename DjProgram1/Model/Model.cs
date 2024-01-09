@@ -1,9 +1,5 @@
-﻿using System;
+﻿using DjProgram1.Model.Data;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DjProgram1.Model.Data;
 
 namespace DjProgram1.Model
 {

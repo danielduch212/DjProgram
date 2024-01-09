@@ -21,7 +21,7 @@ def calculate_bpm(file_path):
 
 
 
-def change_bpm(file_path, old_bpm, new_bpm):
+def change_bpm(file_path, old_bpm, new_bpm, file_path_dir):
 
     y, sr = librosa.load(file_path, sr=None)
 
@@ -33,7 +33,7 @@ def change_bpm(file_path, old_bpm, new_bpm):
     file_name = os.path.basename(file_path)
 
 
-    output_dir = r"C:\Users\Janusz\source\repos\DjProgram1\DjProgram1\songCopies"
+    output_dir = file_path_dir
     output_file_path = os.path.join(output_dir, file_name)
 
     if not os.path.exists(output_dir):

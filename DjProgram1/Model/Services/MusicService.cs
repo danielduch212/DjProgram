@@ -1,26 +1,16 @@
-﻿using System;
+﻿using DjProgram1.Model.Data;
+using NAudio.Wave;
+using Python.Runtime;
+using System;
+using System.Collections.Generic;
 using System.IO;
-
-using System.Windows.Shapes;
+using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using NAudio.Wave;
-using SoundTouch;
-using System.Windows;
-using System.Collections.Generic;
-using System.Windows.Threading;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
-using TagLib;
 using System.Windows.Media.Animation;
-using Un4seen.Bass;
-using Un4seen.Bass.AddOn.Fx;
-using System.Linq;
-using Python.Runtime;
-using System.Threading;
-using VisioForge.Libs.ZXing;
-using System.Security.Policy;
-using DjProgram1.Model.Data;
+using System.Windows.Shapes;
+using System.Windows.Threading;
 using Path = System.IO.Path;
 
 namespace DjProgram1.Model.Services
@@ -28,7 +18,7 @@ namespace DjProgram1.Model.Services
     public class MusicService
     {
         private DispatcherTimer timer;
-        private int currentPosition; 
+        private int currentPosition;
         List<AudioFile> audioFiles;
         public Rectangle progressIndicator;
         private AudioFileReader reader;
@@ -36,23 +26,6 @@ namespace DjProgram1.Model.Services
         private double firstBeatTimeStamp;
         private double beatInterval;
 
-        ~MusicService()
-        {
-            try
-            {
-                var directory = new DirectoryInfo(@"C:\Users\Janusz\source\repos\DjProgram1\DjProgram1\songCopies");
-
-                foreach (FileInfo file in directory.GetFiles())
-                {
-                    file.Delete();
-                }
-
-            }
-            catch (Exception ex)
-            {
-
-            }
-        }
 
         public List<double> GenerateWaveformData(string filePath)
         {
@@ -61,7 +34,7 @@ namespace DjProgram1.Model.Services
             {
                 double totalSeconds = reader.TotalTime.TotalSeconds;
 
-                int sampleInterval = reader.WaveFormat.SampleRate / 2; 
+                int sampleInterval = reader.WaveFormat.SampleRate / 2;
 
                 int totalSamples = (int)(totalSeconds * reader.WaveFormat.SampleRate / sampleInterval);
 
@@ -91,9 +64,6 @@ namespace DjProgram1.Model.Services
                 double barWidth = canvasWidth / samplesToDisplay;
                 double sampleDuration = displaySeconds / (double)samplesToDisplay;
 
-
-                int beatCounter = 0;
-                int beatDisplayInterval = 4; 
 
                 for (int i = 0; i < samplesToDisplay && i < audioSamples.Count; i++)
                 {
@@ -127,22 +97,22 @@ namespace DjProgram1.Model.Services
 
                 foreach (double timeStamp in foundTimeStamps)
                 {
-                    double linePosition = timeStamp * (canvasWidth / sampleDuration);
+                    double linePosition = timeStamp * (canvasWidth / 30);
 
-                    
+
 
                     Rectangle timeMarkerRect = new Rectangle
                     {
                         Width = 2,
                         Height = canvasHeight,
-                        Fill = Brushes.Green,
+                        Fill = Brushes.DarkGray,
                     };
                     Canvas.SetLeft(timeMarkerRect, linePosition);
                     Canvas.SetTop(timeMarkerRect, 0);
                     waveformCanvas.Children.Add(timeMarkerRect);
 
                 }
-              
+
             });
         }
 
@@ -241,6 +211,12 @@ namespace DjProgram1.Model.Services
 
             PythonEngine.Initialize();
 
+
+            //sciezka do folderu z plikami
+            string baseDirectory1 = AppDomain.CurrentDomain.BaseDirectory;
+            DirectoryInfo projectDirectoryInfo1 = Directory.GetParent(baseDirectory1).Parent.Parent.Parent;
+            string servicesPath1 = Path.Combine(projectDirectoryInfo.FullName, "songCopies");
+
             using (Py.GIL())
             {
                 try
@@ -248,7 +224,7 @@ namespace DjProgram1.Model.Services
                     dynamic sys = Py.Import("sys");
                     sys.path.append(servicesPath);
                     dynamic pythonScript = Py.Import("pythonApp");
-                    newFilePath = pythonScript.change_bpm(filePath, oldBPM, newBPM);
+                    newFilePath = pythonScript.change_bpm(filePath, oldBPM, newBPM, servicesPath1);
                 }
                 catch (Exception ex)
                 {
@@ -289,17 +265,6 @@ namespace DjProgram1.Model.Services
             PythonEngine.Shutdown();
             return timeStamps;
         }
-
-
-        public void ProcessBeats(List<double> timeStamps)
-        {
-
-            if (timeStamps.Count >= 4)
-            {
-                firstBeatTimeStamp = timeStamps[0];
-                beatInterval = timeStamps[3] - timeStamps[0];
-            }
-        }
         public double getInterval(List<double> timeStamps)
         {
 
@@ -313,13 +278,13 @@ namespace DjProgram1.Model.Services
                 else
                 {
                     return beatInterval = timeStamps[3] - timeStamps[0];
-    }
+                }
             }
             else
             {
                 return 0;
             }
- 
+
         }
 
         public double GetCurrentPosition(AudioFileReader reader)
@@ -331,7 +296,7 @@ namespace DjProgram1.Model.Services
                     return reader.CurrentTime.TotalSeconds;
                 }
             }
-            catch
+            catch(Exception ex)
             {
 
             }
@@ -341,13 +306,13 @@ namespace DjProgram1.Model.Services
 
         public void UpdateWaveformAndIndicator(double currentPosition, double totalDuration, Canvas waveformCanvas, List<double> audioSamples, List<double> timeStamps)
         {
-            int samplesToDisplay = 30 * 2; 
+            int samplesToDisplay = 30 * 2;
             double canvasWidth = waveformCanvas.ActualWidth;
             double canvasHeight = waveformCanvas.ActualHeight - 30;
             double halfCanvasWidth = canvasWidth * 0.5;
             double barWidth = canvasWidth / samplesToDisplay;
-            double adjustedDuration = Math.Min(30, totalDuration); 
-            double sampleRate = audioSamples.Count / totalDuration; 
+            double adjustedDuration = Math.Min(30, totalDuration);
+            double sampleRate = audioSamples.Count / totalDuration;
 
             double indicatorPosition = currentPosition / adjustedDuration * canvasWidth;
             bool shouldMove = indicatorPosition >= halfCanvasWidth;
@@ -355,7 +320,7 @@ namespace DjProgram1.Model.Services
             {
                 indicatorPosition = halfCanvasWidth;
             }
-            waveformCanvas.Children.Clear(); 
+            waveformCanvas.Children.Clear();
             int startSampleIndex = shouldMove ? (int)(currentPosition * sampleRate) - samplesToDisplay / 2 : 0;
             if (startSampleIndex < 0) startSampleIndex = 0;
             for (int i = 0; i < samplesToDisplay && startSampleIndex + i < audioSamples.Count; i++)
@@ -388,80 +353,6 @@ namespace DjProgram1.Model.Services
         }
 
         public void UpdateWaveformByKnob(double knobRotation, double totalDuration, Canvas waveformCanvas, List<double> audioSamples, List<double> timeStamps)
-        {
-            double currentPosition = knobRotation * totalDuration;
-
-            int samplesToDisplay = 30 * 2; 
-            double canvasWidth = waveformCanvas.ActualWidth;
-            double canvasHeight = waveformCanvas.ActualHeight - 30;
-            double halfCanvasWidth = canvasWidth * 0.5;
-            double barWidth = canvasWidth / samplesToDisplay;
-            double adjustedDuration = Math.Min(30, totalDuration); 
-            double sampleRate = audioSamples.Count / totalDuration; 
-
-            double indicatorPosition = (currentPosition / adjustedDuration) * canvasWidth;
-            bool shouldMove = indicatorPosition >= halfCanvasWidth;
-            if (shouldMove)
-            {
-                indicatorPosition = halfCanvasWidth;
-            }
-
-            waveformCanvas.Children.Clear();
-
-            int startSampleIndex = shouldMove ? (int)(currentPosition * sampleRate) - (samplesToDisplay / 2) : 0;
-            startSampleIndex = Math.Max(0, startSampleIndex);
-
-            for (int i = 0; i < samplesToDisplay && (startSampleIndex + i) < audioSamples.Count; i++)
-            {
-                double sampleHeight = audioSamples[startSampleIndex + i] * canvasHeight;
-                Rectangle rect = new Rectangle
-                {
-                    Width = Math.Max(barWidth - 1, 1),
-                    Height = sampleHeight,
-                    Fill = Brushes.Black
-                };
-
-                double rectPosition = shouldMove ? (i * barWidth) : ((startSampleIndex + i) * barWidth);
-                Canvas.SetLeft(rect, rectPosition);
-                Canvas.SetTop(rect, (canvasHeight - sampleHeight) / 2);
-                waveformCanvas.Children.Add(rect);
-            }
-
-            double firstValidBeat = timeStamps.FirstOrDefault(t => t > 0);
-            double beatInterval = getInterval(timeStamps);
-            double nextBeat = firstValidBeat;
-
-            while (nextBeat <= currentPosition + adjustedDuration)
-            {
-                double linePosition = ((nextBeat - (shouldMove ? currentPosition : 0)) / adjustedDuration) * canvasWidth;
-                if (linePosition >= 0 && linePosition <= canvasWidth)
-                {
-                    Line line = new Line
-                    {
-                        X1 = linePosition,
-                        X2 = linePosition,
-                        Y1 = 0,
-                        Y2 = canvasHeight,
-                        Stroke = Brushes.DarkGray,
-                        StrokeThickness = 2
-                    };
-                    waveformCanvas.Children.Add(line);
-                }
-                nextBeat += beatInterval;
-            }
-
-            Rectangle progressIndicator = new Rectangle
-            {
-                Width = 2,
-                Height = canvasHeight,
-                Fill = Brushes.Red
-            };
-            Canvas.SetLeft(progressIndicator, indicatorPosition);
-            Canvas.SetTop(progressIndicator, 0);
-            waveformCanvas.Children.Add(progressIndicator);
-        }
-
-        public void UpdateWaveformByKnob1(double knobRotation, double totalDuration, Canvas waveformCanvas, List<double> audioSamples, List<double> timeStamps)
         {
             double currentPosition = knobRotation * totalDuration;
 
@@ -516,7 +407,7 @@ namespace DjProgram1.Model.Services
                 {
                     Width = 2,
                     Height = canvasHeight,
-                    Fill = Brushes.Green,
+                    Fill = Brushes.DarkGray,
                 };
                 Canvas.SetLeft(timeMarkerRect, linePosition);
                 Canvas.SetTop(timeMarkerRect, 0);

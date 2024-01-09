@@ -1,22 +1,12 @@
-﻿using System.Windows.Media;
+﻿using DjProgram1.Model.Data;
 using NAudio.Wave;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Shapes;
-using NAudio.Wave.SampleProviders;
-using System.Windows.Media.Animation;
-using TagLib;
 using System.Windows;
-using Python.Runtime;
+using System.Windows.Controls;
 using System.Windows.Threading;
-using System.Diagnostics;
-using Gst.Rtsp;
-using DjProgram1.Model.Data;
 
 namespace DjProgram1.Model.Services
 {
@@ -110,7 +100,7 @@ namespace DjProgram1.Model.Services
             double sampleDisplayInterval = totalDuration / audioSamples.Count;
             while (true)
             {
-                await Task.Delay(50);  
+                await Task.Delay(50);
 
                 if (cancellationToken.IsCancellationRequested)
                 {

@@ -1,34 +1,8 @@
-﻿using System;
+﻿using DjProgram1.Model.Data;
+using DjProgram1.Model.Services;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Shapes;
-using VisioForge.Libs.NAudio.Wave;
-using VisioForge.Libs.NAudio;
-using VisioForge.Libs.TagLib.Mpeg;
-using NAudio.Wave;
-
-
-
-using Path = System.IO.Path;
-using VisioForge.Libs.WindowsMediaLib;
-using NAudio.Gui;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Media3D;
-using VisioForge.Libs.NAudio.VisioForge;
-using System.Threading;
-using System.Threading.Tasks;
-using Python.Runtime;
-using VisioForge.Libs.ZXing;
-using DjProgram1.Controls;
-using System.Windows.Threading;
-using System.Diagnostics;
-using DjProgram1.Model.Services;
-using DjProgram1.Model.Data;
 
 namespace DjProgram1
 {
@@ -38,9 +12,9 @@ namespace DjProgram1
         MusicService musicService1 = new DjProgram1.Model.Services.MusicService();
         MusicService musicService2 = new DjProgram1.Model.Services.MusicService();
         List<Model.Data.AudioFile> audioFiles = new List<Model.Data.AudioFile>();
-  
+
         FileService fileService;
-        
+
 
         ViewModelService ViewModelService1;
         ViewModelService ViewModelService2;
@@ -76,7 +50,7 @@ namespace DjProgram1
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if(audioFiles.Count > 0)
+            if (audioFiles.Count > 0)
             {
                 fileService.UpdateDataBase(audioFiles.ToArray());
                 fileService.DeleteAllCopies();
@@ -88,20 +62,20 @@ namespace DjProgram1
             selectedIndex = songList.SelectedIndex;
             if (selectedIndex >= 0 && selectedIndex != null)
                 ViewModelService2.UploadTrack(selectedIndex);
-            
+
 
 
         }
         private async void buttonUpload1_Click(object sender, RoutedEventArgs e)
         {
             selectedIndex = songList.SelectedIndex;
-            if(selectedIndex >= 0 && selectedIndex != null)
+            if (selectedIndex >= 0 && selectedIndex != null)
                 ViewModelService1.UploadTrack(selectedIndex);
-            
+
         }
         private async void buttonUploadFiles_Click(object sender, RoutedEventArgs e)
         {
-   
+
             if (audioFiles.Count > 0)
             {
                 MessageBoxResult result1 = MessageBox.Show(
@@ -119,11 +93,11 @@ namespace DjProgram1
 
             if (result == System.Windows.Forms.DialogResult.OK)
             {
-                string folderPath = dialog.SelectedPath; 
+                string folderPath = dialog.SelectedPath;
 
                 audioFiles = fileService.uploadSongs(audioFiles, folderPath, songList);
                 model = new Model.Model(audioFiles);
-                this.ViewModelService1 = new ViewModelService(model, fileService,songList, canvas1, knobToCut1, knob1, bpmTextBox1, songOnDeck1, actualTime1, durationTime1, rotateTransformLoading1, rotateTransformCD1,imageLoading1, readyText1, volumeSlider1, synchronizer);
+                this.ViewModelService1 = new ViewModelService(model, fileService, songList, canvas1, knobToCut1, knob1, bpmTextBox1, songOnDeck1, actualTime1, durationTime1, rotateTransformLoading1, rotateTransformCD1, imageLoading1, readyText1, volumeSlider1, synchronizer);
                 this.ViewModelService2 = new ViewModelService(model, fileService, songList, canvas2, knobToCut2, knob2, bpmTextBox2, songOnDeck2, actualTime2, durationTime2, rotateTransformLoading2, rotateTransformCD2, imageLoading2, readyText2, volumeSlider2, synchronizer);
 
             }
@@ -157,23 +131,23 @@ namespace DjProgram1
 
         private async void playButton1_Click(object sender, RoutedEventArgs e)
         {
-            if(ViewModelService1!=null)
+            if (ViewModelService1 != null)
                 ViewModelService1.PlayTrack();
-            
+
         }
 
         private async void playButton2_Click(object sender, RoutedEventArgs e)
         {
-            if(ViewModelService2!=null)
+            if (ViewModelService2 != null)
                 ViewModelService2.PlayTrack();
-            
+
         }
 
         private void pauseButton1_Click(object sender, RoutedEventArgs e)
         {
             if (ViewModelService1 != null)
                 ViewModelService1.PauseTrack();
-            
+
         }
 
         private void pauseButton2_Click(object sender, RoutedEventArgs e)
@@ -198,7 +172,7 @@ namespace DjProgram1
 
         private void volumeSlider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if(ViewModelService1 != null)
+            if (ViewModelService1 != null)
             {
                 ViewModelService1.VolumeSliderChanged();
 
@@ -216,18 +190,18 @@ namespace DjProgram1
 
         private async void synchroButton1_Click(object sender, RoutedEventArgs e)
         {
-            if(ViewModelService1!=null)
+            if (ViewModelService1 != null)
                 ViewModelService1.SynchronizeTrack(bpmTextBox2);
         }
         private async void synchroButton2_Click(object sender, RoutedEventArgs e)
         {
-            if(ViewModelService2!=null)
+            if (ViewModelService2 != null)
                 ViewModelService2.SynchronizeTrack(bpmTextBox1);
         }
 
         private async void changeBPM1_Click(object sender, RoutedEventArgs e)
         {
-            if(ViewModelService1!=null)
+            if (ViewModelService1 != null)
                 ViewModelService1.ChangeBPM();
         }
 

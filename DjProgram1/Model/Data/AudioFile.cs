@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NAudio.Wave;
-using NAudio.Mixer;
-
-namespace DjProgram1.Model.Data
+﻿namespace DjProgram1.Model.Data
 {
     public class AudioFile
     {

@@ -3,16 +3,10 @@ using NAudio.Wave;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace DjProgram1.Controls
@@ -46,7 +40,7 @@ namespace DjProgram1.Controls
 
 
         TextBlock textBLock;
-        double beatThreshold = 0.2;
+        double beatThreshold = 0.5;
 
 
 
@@ -71,7 +65,7 @@ namespace DjProgram1.Controls
             this.audioSamples = audioSamples;
             this.timeStamps = timeStamps;
             beatIntervals = GenerateBeatIntervals(timeStamps, totalDuration);
-            
+
 
         }
         public List<double> GenerateBeatIntervals(List<double> timeStamps, double totalDuration)
@@ -102,7 +96,7 @@ namespace DjProgram1.Controls
             TimeSpan time = TimeSpan.FromSeconds(currentTimeInSeconds);
             textBLock.Text = time.ToString(@"mm\:ss");
 
-            musicService.UpdateWaveformByKnob1(currentPosition / totalDuration, totalDuration, waveFormCanvas, audioSamples, beatIntervals);
+            musicService.UpdateWaveformByKnob(currentPosition / totalDuration, totalDuration, waveFormCanvas, audioSamples, beatIntervals);
         }
 
 
@@ -202,7 +196,7 @@ namespace DjProgram1.Controls
             transform.Angle += angle;
         }
 
-        
+
 
         public void LockKnobRotation()
         {
@@ -223,7 +217,7 @@ namespace DjProgram1.Controls
             Mouse.Capture(DotsCanvas);
         }
 
-        
+
 
         private void Canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {

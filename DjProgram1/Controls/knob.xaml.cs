@@ -1,17 +1,9 @@
 ﻿using DjProgram1.Model.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace DjProgram1.Controls
@@ -24,7 +16,7 @@ namespace DjProgram1.Controls
         private const int NumberOfDots = 10;
         private bool isDragging = false;
         private Point lastMousePosition;
-        private double centerX = 35; 
+        private double centerX = 35;
         private double centerY = 35;
         private bool isKnobLocked = false;
 
@@ -42,7 +34,7 @@ namespace DjProgram1.Controls
 
         private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (isKnobLocked) return;  
+            if (isKnobLocked) return;
 
             isDragging = true;
             lastMousePosition = e.GetPosition(this);
@@ -66,7 +58,7 @@ namespace DjProgram1.Controls
 
         private void Canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (isKnobLocked) return; 
+            if (isKnobLocked) return;
 
             isDragging = false;
             Mouse.Capture(null);
@@ -78,10 +70,10 @@ namespace DjProgram1.Controls
             textBPM = textBPM.Replace("BPM: ", "").Trim();
             if (!double.TryParse(textBPM, out double currentBPM))
             {
-                return; 
+                return;
             }
 
-            currentBPM = RoundToNearestHalf(currentBPM); 
+            currentBPM = RoundToNearestHalf(currentBPM);
 
             if (angleDifference > 0)
             {
@@ -98,21 +90,21 @@ namespace DjProgram1.Controls
         }
         private void DrawDots()
         {
-            double radius = 25; 
-            double centerX = 35; 
-            double centerY = 35; 
+            double radius = 25;
+            double centerX = 35;
+            double centerY = 35;
             double angleStep = 360.0 / NumberOfDots;
-            double lineLength = 7; 
-            double lineWidth = 2; 
+            double lineLength = 7;
+            double lineWidth = 2;
 
-            DotsCanvas.Children.Clear(); 
+            DotsCanvas.Children.Clear();
 
             for (int i = 0; i < NumberOfDots; i++)
             {
                 double angle = angleStep * i;
                 double angleRad = (Math.PI / 180) * angle;
 
-               
+
                 double lineStartX = centerX + (radius - lineLength / 2) * Math.Cos(angleRad);
                 double lineStartY = centerY + (radius - lineLength / 2) * Math.Sin(angleRad);
                 double lineEndX = centerX + (radius + lineLength / 2) * Math.Cos(angleRad);
@@ -170,5 +162,5 @@ namespace DjProgram1.Controls
         }
 
     }
-    
+
 }

@@ -1,19 +1,15 @@
 ﻿using DjProgram1.Controls;
 using DjProgram1.Model.Data;
-using NAudio.Gui;
 using NAudio.Wave;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-using VisioForge.Libs.ZXing;
 
 namespace DjProgram1.Model.Services
 {
@@ -142,7 +138,7 @@ namespace DjProgram1.Model.Services
             this.synchronizer = synchronizer;
 
 
-            fileService = fileService;
+            this.fileService = fileService;
             threadsService = new ThreadsService(musicService, fileService);
 
         }
@@ -151,7 +147,7 @@ namespace DjProgram1.Model.Services
             selectedIndex = songList.SelectedIndex;
             if (songList.SelectedItem != null)
             {
-                if (selectedIndex >= 0 && selectedIndex < model.audioFiles.Count)
+                if (selectedIndex >= 0 && selectedIndex < model.GetAudioFilesCount())
                 {
 
                     if (synchronizer.uploadTrackFinished == false || synchronizer.pythonEngineIsRunning == true)
@@ -159,7 +155,7 @@ namespace DjProgram1.Model.Services
                         return;
                     }
 
-                    if (currentAudioFile == model.audioFiles[selectedIndex])
+                    if (currentAudioFile == model.GetAudioFile(selectedIndex))
                     {
                         return;
                     }
@@ -201,7 +197,7 @@ namespace DjProgram1.Model.Services
                     ready = false;
 
                     positionOfLine = 0;
-                    currentAudioFile = model.audioFiles[selectedIndex];
+                    currentAudioFile = model.GetAudioFile(selectedIndex);
                     songOnDeck.Text = currentAudioFile.FileName;
 
 
@@ -227,7 +223,7 @@ namespace DjProgram1.Model.Services
                         textBPM = textBPM.Replace("BPM: ", "").Trim();
                         double.TryParse(textBPM, out double countedBPM);
                         currentAudioFile.BPM = countedBPM;
-                        refreshListBoxTask = threadsService.refreshList(songList, model.audioFiles);
+                        refreshListBoxTask = threadsService.refreshList(songList, model.GetAudioFiles());
 
                     }
                     else
@@ -471,6 +467,10 @@ namespace DjProgram1.Model.Services
                     bpmTextBox.IsReadOnly = true;
                     knobToCut.SetProgressIndicatorToStart();
 
+                    double audioDuration = audioFileReader.TotalTime.TotalSeconds;
+                    TimeSpan audioDurationTimeSpan = TimeSpan.FromSeconds(audioDuration);
+                    durationTime.Text = audioDurationTimeSpan.ToString(@"mm\:ss");
+
                     ready = true;
                 }
                 knobToCut.UnlockKnobRotation();
@@ -525,6 +525,10 @@ namespace DjProgram1.Model.Services
                 bpmTextBox.IsReadOnly = true;
                 knobToCut.SetProgressIndicatorToStart();
                 actualTime.Text = "00:00";
+
+                double audioDuration = audioFileReader.TotalTime.TotalSeconds;
+                TimeSpan audioDurationTimeSpan = TimeSpan.FromSeconds(audioDuration);
+                durationTime.Text = audioDurationTimeSpan.ToString(@"mm\:ss");
             }
             ready = true;
             knobToCut.UnlockKnobRotation();
