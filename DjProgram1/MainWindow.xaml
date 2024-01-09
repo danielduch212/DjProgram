@@ -120,7 +120,6 @@
                 <Canvas Name="canvas1" Width="250" Height="100" Background="White" Margin="0,-125,0,0" />
                 <controls:KnobToCut x:Name="knobToCut1" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
 
-                <Canvas Name="previewCanvas1" Width="150" Height="50" Background="White" Margin="0,20,0,0" />
                 <TextBlock Name="durationTime1" Width="50" Height="50" Margin="320,-280,0,0"/>
 
                 <!-- Dodaj swoje pozostałe elementy -->
@@ -170,7 +169,6 @@
                 <Canvas x:Name="canvas2" Width="250" Height="100" Background="White" Margin="0,-125,0,0"/>
                 <controls:KnobToCut x:Name="knobToCut2" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
 
-                <Canvas Name="previewCanvas2" Width="150" Height="50" Background="White" Margin="0,20,0,0" />
                 <TextBlock Name="durationTime2" Width="50" Height="50" Margin="320,-280,0,0"/>
             </StackPanel>
         </Grid>

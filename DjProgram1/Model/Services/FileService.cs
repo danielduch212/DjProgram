@@ -121,12 +121,10 @@ namespace DjProgram1.Model.Services
             string currentCatalog = AppDomain.CurrentDomain.BaseDirectory;
             string filePath = Path.Combine(currentCatalog, fileName);
 
-            // Usuń zawartość pliku, jeśli istnieje, lub utwórz plik, jeśli nie istnieje
-            using (StreamWriter writer = new StreamWriter(filePath, append: false)) // append: false nadpisuje plik lub tworzy nowy
+            using (StreamWriter writer = new StreamWriter(filePath, append: false)) 
             {
                 foreach (var audioFile in audioFiles)
                 {
-                    // Jeśli BPM jest null, zostanie użyta wartość 0
                     double bpmValue = audioFile.BPM ?? 0;
                     string lineToWrite = $"{audioFile.FileName}   BPM: {bpmValue}";
                     writer.WriteLine(lineToWrite);
@@ -154,7 +152,6 @@ namespace DjProgram1.Model.Services
             string databasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "baza_Danych_BPM");
             Dictionary<string, double?> bpmData = new Dictionary<string, double?>();
 
-            // Load BPM data from the file if it exists
             if (System.IO.File.Exists(databasePath))
             {
                 string[] bpmLines = System.IO.File.ReadAllLines(databasePath);
@@ -163,7 +160,7 @@ namespace DjProgram1.Model.Services
                     var parts = line.Split(new[] { "BPM:" }, StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length == 2 && double.TryParse(parts[1].Trim(), out double bpm))
                     {
-                        bpmData[parts[0].Trim()] = bpm; // Assign BPM to the file name
+                        bpmData[parts[0].Trim()] = bpm; 
                     }
                 }
             }
@@ -349,8 +346,8 @@ namespace DjProgram1.Model.Services
 
                 listBoxItem.Content = grid;
 
-                return listBoxItem; // This return statement is for the lambda passed to Dispatcher.Invoke
-            }) as ListBoxItem; // This is the actual return of your CreateListBoxItem method
+                return listBoxItem; 
+            }) as ListBoxItem; 
         }
 
 

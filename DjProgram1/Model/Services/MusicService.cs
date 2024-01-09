@@ -303,25 +303,23 @@ namespace DjProgram1.Model.Services
         public double getInterval(List<double> timeStamps)
         {
 
-            //if (timeStamps.Count >= 4)
-            //{
-            //    if (timeStamps[3] - timeStamps[0] < 1.5)
-            //    {
-            //        return beatInterval = timeStamps[7] - timeStamps[0];
+            if (timeStamps.Count >= 4)
+            {
+                if (timeStamps[3] - timeStamps[0] < 1.5)
+                {
+                    return beatInterval = timeStamps[7] - timeStamps[0];
 
-            //    }
-            //    else
-            //    {
-            //        return beatInterval = timeStamps[3] - timeStamps[0];
-
-            //    }
-            //}
-            //else
-            //{
-            //    return 0;
-            //}
-            return beatInterval = timeStamps[3] - timeStamps[0];
-
+                }
+                else
+                {
+                    return beatInterval = timeStamps[3] - timeStamps[0];
+    }
+            }
+            else
+            {
+                return 0;
+            }
+ 
         }
 
         public double GetCurrentPosition(AudioFileReader reader)
@@ -513,15 +511,6 @@ namespace DjProgram1.Model.Services
             {
                 double adjustedTimeStamp = timeStamp - (startSampleIndex / 2);
                 double linePosition = adjustedTimeStamp * (canvasWidth / adjustedDuration);
-
-                //if (shouldMove)
-                //{
-                //    linePosition = adjustedTimeStamp * (canvasWidth / adjustedDuration);
-                //}
-                //else
-                //{
-                //    continue;
-                //}
 
                 Rectangle timeMarkerRect = new Rectangle
                 {

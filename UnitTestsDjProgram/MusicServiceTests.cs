@@ -1,11 +1,12 @@
 namespace UnitTestsDjProgram
 {
     [TestClass]
-    public class UnitTest1
+    public class MusicServiceTests
     {
         [TestMethod]
-        public void TestMethod1()
+        public void MusicServiceTests()
         {
         }
+
     }
 }

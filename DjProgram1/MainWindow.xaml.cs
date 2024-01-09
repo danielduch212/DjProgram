@@ -27,7 +27,6 @@ using VisioForge.Libs.ZXing;
 using DjProgram1.Controls;
 using System.Windows.Threading;
 using System.Diagnostics;
-using DjProgram1.ViewModel;
 using DjProgram1.Model.Services;
 using DjProgram1.Model.Data;
 

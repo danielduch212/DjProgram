@@ -9,13 +9,10 @@
     <Canvas MouseDown="Canvas_MouseDown" 
         MouseMove="Canvas_MouseMove" 
         MouseUp="Canvas_MouseUp">
-        <!-- Koło pokrętła -->
         <Ellipse Width="60" Height="60" Fill="Black" 
              Canvas.Left="5" Canvas.Top="5"/>
 
-        <!-- Kontener na kropki -->
         <Canvas x:Name="DotsCanvas" Width="70" Height="70">
-            <!-- Tutaj umieść elementy wewnątrz DotsCanvas, jeśli są potrzebne -->
         </Canvas>
     </Canvas>
 </UserControl>

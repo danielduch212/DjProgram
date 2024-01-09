@@ -1,6 +1,5 @@
 ﻿using DjProgram1.Controls;
 using DjProgram1.Model.Data;
-using DjProgram1.Model.Services;
 using NAudio.Gui;
 using NAudio.Wave;
 using System;
@@ -16,7 +15,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using VisioForge.Libs.ZXing;
 
-namespace DjProgram1.ViewModel
+namespace DjProgram1.Model.Services
 {
     internal class ViewModelService
     {
@@ -101,7 +100,7 @@ namespace DjProgram1.ViewModel
 
         private Task refreshListBoxTask;
 
-        DjProgram1.Model.Model model;
+        Model model;
 
         Synchronizer synchronizer;
 
@@ -121,7 +120,7 @@ namespace DjProgram1.ViewModel
 
         RotateTransform rotateTransformCD;
 
-        public ViewModelService(Model.Model model, FileService fileService, ListBox songList, Canvas canvas, KnobToCut knobToCut, Knob knob, TextBox bpmTextBox, TextBox songOnDeck, TextBlock actualTime, TextBlock durationTime, RotateTransform rotateTransformLoading, RotateTransform rotateTransformCD, Image imageLoading, TextBlock readyText, Slider volumeSlider, Synchronizer synchronizer)
+        public ViewModelService(DjProgram1.Model.Model model, FileService fileService, ListBox songList, Canvas canvas, KnobToCut knobToCut, Knob knob, TextBox bpmTextBox, TextBox songOnDeck, TextBlock actualTime, TextBlock durationTime, RotateTransform rotateTransformLoading, RotateTransform rotateTransformCD, Image imageLoading, TextBlock readyText, Slider volumeSlider, Synchronizer synchronizer)
         {
             this.songList = songList;
             this.canvas = canvas;
@@ -168,7 +167,7 @@ namespace DjProgram1.ViewModel
                     {
 
                         waveOut.Dispose();
-                        waveOut=null;
+                        waveOut = null;
                         audioFileReader.Dispose();
                         timer.Stop();
                         musicService.StopRotation(rotateTransformCD);
@@ -182,10 +181,10 @@ namespace DjProgram1.ViewModel
                     }
                     if (waveOutPlaying == true)
                     {
-                        
+
                     }
                     isWaveformGenerated = false;
-                    
+
 
                     if (ctsMoveLineWaveForm != null)
                         ctsMoveLineWaveForm.Cancel();
@@ -414,7 +413,7 @@ namespace DjProgram1.ViewModel
 
                 waveOut.Dispose();
                 audioFileReader.Dispose();
-                if(changedSongFilePath != currentAudioFile.FilePath)
+                if (changedSongFilePath != currentAudioFile.FilePath)
                 {
                     audioFileReader = new AudioFileReader(changedSongFilePath);
 
@@ -423,7 +422,7 @@ namespace DjProgram1.ViewModel
                 {
                     audioFileReader = new AudioFileReader(currentAudioFile.FilePath);
                 }
-                
+
                 waveOut = new WaveOut();
                 waveOut.Init(audioFileReader);
                 knobToCut.addAtributes(audioFileReader, waveFormData, timeStampsData);
@@ -481,7 +480,7 @@ namespace DjProgram1.ViewModel
 
         public async void ChangeBPM()
         {
-            if(ready == false)
+            if (ready == false)
             {
                 return;
             }
@@ -498,7 +497,7 @@ namespace DjProgram1.ViewModel
             double newBPM = double.Parse(text);
             if (newBPM != currentAudioFile.BPM && synchronizer.pythonEngineIsRunning == false)
             {
-                
+
                 readyText.Foreground = Brushes.Red;
                 deleteTrack = threadsService.deleteCopiedTrack(currentAudioFile.FileName);
                 await deleteTrack;
