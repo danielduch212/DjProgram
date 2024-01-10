@@ -106,7 +106,7 @@ namespace DjProgram1.Model.Services
         private KnobToCut knobToCut;
         private Knob knob;
         private TextBox bpmTextBox;
-        private TextBox songOnDeck;
+        private TextBlock songOnDeck;
         private TextBlock actualTime;
         private TextBlock durationTime;
         RotateTransform rotateTransformLoading;
@@ -116,7 +116,7 @@ namespace DjProgram1.Model.Services
 
         RotateTransform rotateTransformCD;
 
-        public ViewModelService(DjProgram1.Model.Model model, FileService fileService, ListBox songList, Canvas canvas, KnobToCut knobToCut, Knob knob, TextBox bpmTextBox, TextBox songOnDeck, TextBlock actualTime, TextBlock durationTime, RotateTransform rotateTransformLoading, RotateTransform rotateTransformCD, Image imageLoading, TextBlock readyText, Slider volumeSlider, Synchronizer synchronizer)
+        public ViewModelService(DjProgram1.Model.Model model, FileService fileService, ListBox songList, Canvas canvas, KnobToCut knobToCut, Knob knob, TextBox bpmTextBox, TextBlock songOnDeck, TextBlock actualTime, TextBlock durationTime, RotateTransform rotateTransformLoading, RotateTransform rotateTransformCD, Image imageLoading, TextBlock readyText, Slider volumeSlider, Synchronizer synchronizer)
         {
             this.songList = songList;
             this.canvas = canvas;

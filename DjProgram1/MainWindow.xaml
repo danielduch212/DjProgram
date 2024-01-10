@@ -24,7 +24,7 @@
             <!-- Przycisk "Wgraj Pliki" po lewej stronie -->
             <Button Margin="10,5,10,0" Width="100" Click="buttonUploadFiles_Click">
                 <StackPanel >
-                    <TextBlock Text="Wgraj Pliki" />
+                    <TextBlock Text="Upload Files" />
 
                 </StackPanel>
             </Button>
@@ -60,12 +60,12 @@
         <StackPanel Grid.Row="2">
             <Button Margin="10,2,400,0" Width="100" Click="buttonUpload1_Click">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Wgraj" />
+                    <TextBlock Text="Upload" />
                 </StackPanel>
             </Button>
             <Button Margin="10,-17,-400,0" Width="100" Click="buttonUpload2_Click">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Wgraj" />
+                    <TextBlock Text="Upload" />
                 </StackPanel>
             </Button>
         </StackPanel>
@@ -75,55 +75,66 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel HorizontalAlignment="Center" Width="400">
-                <Image x:Name="image1" Source="C:\Users\Janusz\Desktop\cdToAnimate.png" HorizontalAlignment="Center"  Width="150" Height="150" RenderTransformOrigin="0.5,0.5"  >
-                    <Image.RenderTransform>
-                        <RotateTransform x:Name="rotateTransformCD1" Angle="0" />
-                    </Image.RenderTransform>
+            <Border BorderBrush="Black" BorderThickness="2" Padding="5" Grid.Row="1" Margin="0,0,0,0">
+                <StackPanel HorizontalAlignment="Center" Width="400">
+                    <Image x:Name="image1" Source="C:\Users\Janusz\Desktop\cdToAnimate.png" HorizontalAlignment="Center"  Width="150" Height="150" RenderTransformOrigin="0.5,0.5"  >
+                        <Image.RenderTransform>
+                            <RotateTransform x:Name="rotateTransformCD1" Angle="0" />
+                        </Image.RenderTransform>
 
-                </Image>
-                <Image x:Name="imageLoading1" Source="C:\Users\Janusz\Desktop\load-icon-png-7952.png" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10,-140,10,0" Width="70" Height="70" RenderTransformOrigin="0.5,0.5"  >
-                    <Image.RenderTransform>
-                        <RotateTransform x:Name="rotateTransformLoading1" Angle="0" />
-                    </Image.RenderTransform>
+                    </Image>
+                    <Image x:Name="imageLoading1" Source="C:\Users\Janusz\Desktop\load-icon-png-7952.png" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10,-140,10,0" Width="70" Height="70" RenderTransformOrigin="0.5,0.5"  >
+                        <Image.RenderTransform>
+                            <RotateTransform x:Name="rotateTransformLoading1" Angle="0" />
+                        </Image.RenderTransform>
 
-                </Image>
-                <TextBlock x:Name="readyText1" Text="READY" Margin="50,-100,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="Red" FontWeight="Bold" />
-                <TextBox Name="bpmTextBox1" Text="BPM: " Margin="0,20,0,0" HorizontalAlignment="Center" LostFocus="textChangedBPMTextBox1"/>
-                <controls:Knob x:Name="knob1" Height ="70" Width="70" Margin="0,-40,40,0" HorizontalAlignment="Right" VerticalAlignment="Top" />
-                <TextBox Name ="songOnDeck1" Text="---------------" Margin="0,-25,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" />
-                <Button Width="50" Height="50" Margin="-120,70,10,0" HorizontalAlignment="Center" Click="playButton1_Click" Background="White">
-                    <Image Source="C:\Users\Janusz\Desktop\playButton.png" />
-                </Button>
+                    </Image>
+                    <Border BorderBrush="Black" BorderThickness="2" Margin="50,-100,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <TextBlock x:Name="readyText1" Text="READY" Foreground="Red" FontWeight="Bold" />
+                    </Border>
+                    <TextBox Name="bpmTextBox1" Text="BPM: " Margin="0,20,0,0" HorizontalAlignment="Center" LostFocus="textChangedBPMTextBox1"/>
+                    <controls:Knob x:Name="knob1" Height ="70" Width="70" Margin="0,-40,40,0" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                    <Border Width="150" Height="Auto" ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-25,0,0">
+                        <TextBlock Name="songOnDeck1" Text="Bardzo długa nazwa piosenki, która nie mieści się w widoku" SizeChanged="TextBlock_SizeChanged">
+                            <TextBlock.RenderTransform>
+                                <TranslateTransform X="0" />
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+                    </Border>
+                    <Button Width="50" Height="50" Margin="-120,70,10,0" HorizontalAlignment="Center" Click="playButton1_Click" Background="White">
+                        <Image Source="C:\Users\Janusz\Desktop\playButton.png" />
+                    </Button>
 
-                <Button Width="50" Height="50" Margin="-20,-50,0,0" HorizontalAlignment="Center" Click="pauseButton1_Click" Background="White">
-                    <Image Source="C:\Users\Janusz\Desktop\ikonaPause.jpg" />
-                </Button>
-                <Button Width="50" Height="50" Margin="90,-50,0,0" HorizontalAlignment="Center" Click="stopButton1_Click" Background="White">
-                    <Image Source="C:\Users\Janusz\Desktop\blacksquare.png" />
-                </Button>
-                <Button Width="75" Height="50" Margin="240,-160,0,0" HorizontalAlignment="Center" Click="changeBPM1_Click" Background="White">
-                    <TextBlock Text="Change BPM" />
-                </Button>
-                <Button Width="75" Height="50" Margin="240,-50,0,0" HorizontalAlignment="Center" Click="synchroButton1_Click" Background="White">
-                    <TextBlock Text="SYNCHRO" />
-                </Button>
-                <Slider x:Name="volumeSlider1" Width="18" Height="150" Margin="-300,-300,0,0" Orientation="Vertical" Value="100" ValueChanged="volumeSlider1_ValueChanged">
-                    <Slider.Resources>
-                        <Style TargetType="Slider">
-                            <Setter Property="Minimum" Value="0" />
-                            <Setter Property="Maximum" Value="100" />
-                        </Style>
-                    </Slider.Resources>
-                </Slider>
-                <TextBlock Name="actualTime1" Width="50" Height="50" Margin="-320,100,0,0"  />
-                <Canvas Name="canvas1" Width="250" Height="100" Background="White" Margin="0,-125,0,0" />
-                <controls:KnobToCut x:Name="knobToCut1" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
+                    <Button Width="50" Height="50" Margin="-20,-50,0,0" HorizontalAlignment="Center" Click="pauseButton1_Click" Background="White">
+                        <Image Source="C:\Users\Janusz\Desktop\ikonaPause.jpg" />
+                    </Button>
+                    <Button Width="50" Height="50" Margin="90,-50,0,0" HorizontalAlignment="Center" Click="stopButton1_Click" Background="White">
+                        <Image Source="C:\Users\Janusz\Desktop\blacksquare.png" />
+                    </Button>
+                    <Button Width="75" Height="50" Margin="240,-160,0,0" HorizontalAlignment="Center" Click="changeBPM1_Click" Background="White">
+                        <TextBlock Text="Change BPM" />
+                    </Button>
+                    <Button Width="75" Height="50" Margin="240,-50,0,0" HorizontalAlignment="Center" Click="synchroButton1_Click" Background="White">
+                        <TextBlock Text="SYNCHRO" />
+                    </Button>
+                    <Slider x:Name="volumeSlider1" Width="18" Height="150" Margin="-300,-300,0,0" Orientation="Vertical" Value="100" ValueChanged="volumeSlider1_ValueChanged">
+                        <Slider.Resources>
+                            <Style TargetType="Slider">
+                                <Setter Property="Minimum" Value="0" />
+                                <Setter Property="Maximum" Value="100" />
+                            </Style>
+                        </Slider.Resources>
+                    </Slider>
+                    <TextBlock Name="actualTime1" Width="50" Height="50" Margin="-320,100,0,0"  />
+                    <Canvas Name="canvas1" Width="250" Height="100" Background="White" Margin="0,-125,0,0" />
+                    <controls:KnobToCut x:Name="knobToCut1" Height ="70" Width="70" Margin="0,0,0,0" HorizontalAlignment="Center" />
 
-                <TextBlock Name="durationTime1" Width="50" Height="50" Margin="320,-280,0,0"/>
+                    <TextBlock Name="durationTime1" Width="50" Height="50" Margin="320,-280,0,0"/>
 
-                <!-- Dodaj swoje pozostałe elementy -->
-            </StackPanel>
+                    <!-- Dodaj swoje pozostałe elementy -->
+                </StackPanel>
+            </Border>
+
 
             <StackPanel Grid.Column="1" HorizontalAlignment="Right" Width="400">
                 <Image x:Name="image2" Source="C:\Users\Janusz\Desktop\cdToAnimate.png" HorizontalAlignment="Center"  Width="150" Height="150" RenderTransformOrigin="0.5,0.5"  >
@@ -141,7 +152,7 @@
                 <TextBlock x:Name="readyText2" Text="READY" Margin="0,-100,50,0" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="Red" FontWeight="Bold" />
                 <controls:Knob x:Name="knob2" Height ="70" Width="70" Margin="40,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
                 <TextBox x:Name="bpmTextBox2" Text="BPM: " Margin="0,-40,0,0" HorizontalAlignment="Center" LostFocus="textChangedBPMTextBox2" />
-                <TextBox Name ="songOnDeck2" Text="---------------" Margin="0,-20,0,0"  HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                <TextBlock Name ="songOnDeck2" Text="---------------" Margin="0,-20,0,0"  HorizontalAlignment="Center" VerticalAlignment="Top"/>
                 <Button Width="50" Height="50" Margin="-110,70,0,0" HorizontalAlignment="Center" Click="playButton2_Click">
                     <Image Source="C:\Users\Janusz\Desktop\playButton.png" />
                 </Button>

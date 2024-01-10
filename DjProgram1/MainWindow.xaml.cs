@@ -1,8 +1,11 @@
 ﻿using DjProgram1.Model.Data;
 using DjProgram1.Model.Services;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
+using System.Windows.Media;
 
 namespace DjProgram1
 {
@@ -236,6 +239,29 @@ namespace DjProgram1
             if (!newBpm.StartsWith("BPM: "))
             {
                 bpmTextBox2.Text = "BPM: " + newBpm;
+            }
+        }
+        private void TextBlock_SizeChanged(object sender, RoutedEventArgs e)
+        {
+            TextBlock textBlock = sender as TextBlock;
+            if (textBlock != null)
+            {
+                var border = textBlock.Parent as Border;
+                if (border != null && textBlock.ActualWidth > border.ActualWidth)
+                {
+                    var animation = new DoubleAnimation
+                    {
+                        From = border.ActualWidth,
+                        To = -textBlock.ActualWidth,
+                        Duration = new Duration(TimeSpan.FromSeconds(10)),
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        AutoReverse = true
+                    };
+
+                    TranslateTransform transform = new TranslateTransform();
+                    textBlock.RenderTransform = transform;
+                    transform.BeginAnimation(TranslateTransform.XProperty, animation);
+                }
             }
         }
 
