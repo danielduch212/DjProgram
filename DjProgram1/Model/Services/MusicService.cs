@@ -27,17 +27,20 @@ namespace DjProgram1.Model.Services
         private double beatInterval;
         private string filePathPythonDDL;
         FileService fileService;
-        //= @"C:\Program Files\Python311\python311.dll";
+        
 
         public MusicService(string filePath, FileService fileService)
         {
             this.filePathPythonDDL = @filePath;
             this.fileService = fileService;
         }
+        public MusicService(string filePath)
+        {
+            this.filePathPythonDDL = @filePath;
+        }
         public MusicService()
         {
         }
-
         public List<double> GenerateWaveformData(string filePath)
         {
             List<double> audioSamples = new List<double>();
@@ -194,9 +197,9 @@ namespace DjProgram1.Model.Services
 
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent.Parent;
 
-            string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "Model", "Services");
+            string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "DjProgram1", "Model", "Services");
 
             Runtime.PythonDLL = @filePathPythonDDL;
 
@@ -244,16 +247,15 @@ namespace DjProgram1.Model.Services
 
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent.Parent;
 
-            string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "Model", "Services");
+            string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "DjProgram1", "Model", "Services");
 
             Runtime.PythonDLL = @filePathPythonDDL;
 
             PythonEngine.Initialize();
 
 
-            //sciezka do folderu z plikami
             string baseDirectory1 = AppDomain.CurrentDomain.BaseDirectory;
             DirectoryInfo projectDirectoryInfo1 = Directory.GetParent(baseDirectory1).Parent.Parent.Parent;
             string servicesPath1 = Path.Combine(projectDirectoryInfo.FullName, "songCopies");

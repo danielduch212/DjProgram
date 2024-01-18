@@ -1,63 +1,111 @@
-using DjProgram1.Model.Services;
+ï»¿using DjProgram1.Model.Services;
+using Python.Runtime;
+using VisioForge.Libs.ZXing;
 
 namespace UnitTestsDjProgram
 {
     [TestClass]
     public class MusicServiceTests
     {
+        string filePathDDL = @"C:\Program Files\Python311\python311.dll";
+
         [TestMethod]
         public void GenerateWaveformData_GenerateWaveformData_ReturnsCorrectSampleCount_ForValidFile()
         {
 
-
-            MusicService musicService = new MusicService();            
+            MusicService musicService = new MusicService(filePathDDL);
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
-            string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "testFiles");
+            string testFilesPath = Path.Combine(projectDirectoryInfo.FullName, "testFiles");
 
-            var testFilePath = @"œcie¿ka\do\pliku\poprawnego.wav";
+            string testFileName = "Sentino & Doda - ï¼‚Latoï¼‚ feat. Sanah (AMF BLEND).wav";
+
+            var testFilePath = Path.Combine(testFilesPath, testFileName);
 
             var result = musicService.GenerateWaveformData(testFilePath);
 
-            // SprawdŸ oczekiwane wyniki, np. czy liczba próbek jest poprawna
-            Assert.AreEqual(expectedSampleCount, result.SampleCount);
+            Assert.AreEqual(510, result.Count);
         }
-
-        // Testowanie z pustym plikiem
         [TestMethod]
         public void GenerateWaveformData_ReturnsZero_ForEmptyFile()
         {
-            var musicService = new MusicService();
-            var emptyFilePath = @"œcie¿ka\do\pustego\pliku.wav";
+            MusicService musicService = new MusicService(filePathDDL);
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            string testFilesPath = Path.Combine(projectDirectoryInfo.FullName, "testFiles");
 
-            var result = musicService.GenerateWaveformData(emptyFilePath);
+            string testFileName = "emptyWav.wav";
 
-            // SprawdŸ, czy liczba próbek jest równa zero dla pustego pliku
-            Assert.AreEqual(0, result.SampleCount);
+            var testFilePath = Path.Combine(testFilesPath, testFileName);
+
+            var result = musicService.GenerateWaveformData(testFilePath);
+
+            Assert.AreEqual(0, result.Count);
         }
-
-        // Testowanie wszystkich plików w folderze
         [TestMethod]
         public void GenerateWaveformData_ReturnsValidSampleCount_ForAllFilesInFolder()
         {
-            var musicService = new MusicService();
-            var testFilesPath = @"œcie¿ka\do\folderu\z\plikami\testowymi";
-            var testFiles = Directory.GetFiles(testFilesPath, "*.wav");
+            MusicService musicService = new MusicService(filePathDDL);
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            string testFilesPath = Path.Combine(projectDirectoryInfo.FullName, "testSongBase");
+
+            string[] testFiles = Directory.GetFiles(testFilesPath);
 
             foreach (var filePath in testFiles)
             {
                 var result = musicService.GenerateWaveformData(filePath);
 
-                // SprawdŸ oczekiwane wyniki dla ka¿dego pliku
-                // Mo¿esz chcieæ u¿yæ Assert.IsTrue z warunkiem, który definiuje "poprawnoœæ" próbki
-                // na przyk³ad, ¿e liczba próbek powinna byæ wiêksza ni¿ 0 dla niepustych plików
-                Assert.IsTrue(result.SampleCount > 0);
+                Assert.IsTrue(result.Count > 0, $"Test failed for file: {filePath}");
             }
         }
+        [TestMethod]
+        public void CountBPM_returnsExpectedValue()
+        {
+            MusicService musicService = new MusicService(filePathDDL);
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            string testFilesPath = Path.Combine(projectDirectoryInfo.FullName, "testFiles");
 
-        //w katalogu projektu zrobic sobie plik do testow lub dwa ogolnie zrobic folder testing czy cos
-        //a i ogolnie wywalic te polskie nazwy plikow raczej
-        //plan na jutro - z kilka testow skonczyc - pozniej troche interfejsu z 2 godziny ulepszania - pozniej caly dzien pisanie pracy
+            string testFileName = "MACKLEMORE & RYAN LEWIS - CAN'T HOLD US FEAT. RAY DALTON (OFFICIAL MUSIC VIDEO).wav";
+            var testFilePath = Path.Combine(testFilesPath, testFileName);
 
+            var bpmString = musicService.CalculateBPMPython(testFilePath);
+
+            
+
+            if (double.TryParse(bpmString, out double bpm))
+            {
+                Assert.IsTrue(bpm >= 143 && bpm <= 149, $"BPM {bpm} nie mieÅ›ci siÄ™ w oczekiwanym przedziale od 143 do 147.");
+            }
+            else
+            {
+                Assert.Fail("Nie udaÅ‚o siÄ™ przekonwertowaÄ‡ BPM na wartoÅ›Ä‡ liczbowÄ….");
+            }
+        }
+        [TestMethod]
+        public void ChangeBPM_EffectivelyChangesBPM()
+        {
+            MusicService musicService = new MusicService(filePathDDL);
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            string testFilesPath = Path.Combine(projectDirectoryInfo.FullName, "testSongBase");
+
+            string testFileName = "Avicii - Waiting For Love.wav";
+            var testFilePath = Path.Combine(testFilesPath, testFileName);
+
+            var originalBpmString = musicService.CalculateBPMPython(testFilePath);
+            double.TryParse(originalBpmString, out double bpm);
+
+
+            var filePathNewBPM=musicService.ChangeBPM(testFilePath, bpm, 180.0);
+            var calculatedNewBPM = musicService.CalculateBPMPython(filePathNewBPM);
+            double.TryParse(calculatedNewBPM, out double newBpm);
+
+            FileService fileService = new FileService();
+            fileService.deleteSong(filePathNewBPM);
+            Assert.AreEqual(180, newBpm);
+
+        }
     }
 }

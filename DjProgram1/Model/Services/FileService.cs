@@ -257,9 +257,9 @@ namespace DjProgram1.Model.Services
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent.Parent;
 
-            string folderPath = Path.Combine(projectDirectoryInfo.FullName, "songCopies");
+            string folderPath = Path.Combine(projectDirectoryInfo.FullName, "DjProgram1","songCopies");
             if (!Directory.Exists(folderPath))
             {
                 return;
@@ -283,9 +283,9 @@ namespace DjProgram1.Model.Services
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent.Parent;
 
-            string folderPath = Path.Combine(projectDirectoryInfo.FullName, "songCopies");
+            string folderPath = Path.Combine(projectDirectoryInfo.FullName, "DjProgram1", "songCopies");
             if (!Directory.Exists(folderPath))
             {
                 return;
@@ -359,9 +359,9 @@ namespace DjProgram1.Model.Services
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent.Parent;
 
-            string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "controlsImages");
+            string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "DjProgram1", "controlsImages");
 
             DirectoryInfo dirInfo = new DirectoryInfo(servicesPath);
             FileInfo[] files = dirInfo.GetFiles(name + ".*", SearchOption.AllDirectories);
@@ -490,6 +490,7 @@ namespace DjProgram1.Model.Services
                 throw new DirectoryNotFoundException("Nie można znaleźć katalogu projektu.");
             }
         }
+        
 
         public void ClearFilePythonDDl()
         {
