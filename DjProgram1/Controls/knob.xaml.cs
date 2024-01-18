@@ -22,16 +22,20 @@ namespace DjProgram1.Controls
 
         public TextBlock bpmTextBox { get; set; }
 
-        private MusicService musicService = new MusicService();
+        private MusicService musicService;
         double bpmValue = 0;
 
         public Knob()
         {
             InitializeComponent();
-
             DrawDots();
         }
 
+        public void Initialize(MusicService musicService)
+        {
+            this.musicService = musicService;
+
+        }
         private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (isKnobLocked) return;

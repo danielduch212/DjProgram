@@ -1,4 +1,6 @@
-﻿using DjProgram1.Model.Data;
+﻿using DjProgram1.Controls;
+using DjProgram1.Model.Data;
+using NAudio.Gui;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using ListBox = System.Windows.Controls.ListBox;
 
 namespace DjProgram1.Model.Services
@@ -15,6 +18,7 @@ namespace DjProgram1.Model.Services
     {
 
         private MusicService musicService = new MusicService();
+        
 
         public void writeBPMData(AudioFile[] audioFiles)
         {
@@ -409,11 +413,103 @@ namespace DjProgram1.Model.Services
 
 
         }
+        public string FindPythonDDLFilePath()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
 
+            FileInfo[] files = projectDirectoryInfo.GetFiles("pythonDLLfilePath.txt", SearchOption.AllDirectories);
 
+            if (files.Length > 0)
+            {
+                string filePath = files[0].FullName;
+                string fileContent = File.ReadAllText(filePath);
+                return fileContent;
+            }
+            else
+            {
+                MessageBoxResult result1 = MessageBox.Show(
+                            "Podaj folder zawierający bibliotekę pythonDLL 311",
+                            "Potwierdzenie",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+
+                while (true) 
+                {
+                    var dialog = new System.Windows.Forms.FolderBrowserDialog();
+                    System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+
+                    if (result == System.Windows.Forms.DialogResult.OK)
+                    {
+                        string folderPath = dialog.SelectedPath;
+                        files = new DirectoryInfo(folderPath).GetFiles("python311.dll", SearchOption.TopDirectoryOnly);
+                        if (files.Length > 0)
+                        {
+                            WritePythonDDLFilePath(files[0].FullName);
+                            return files[0].FullName;
+
+                        }
+                        else
+                        {
+                            MessageBox.Show("Nie znaleziono biblioteki python311.dll w podanym folderze. Spróbuj ponownie.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    else
+                    {
+                        return null; 
+                    }
+                }
+            }
+        }
+
+        private void WritePythonDDLFilePath(string filePath)
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+
+            if (projectDirectoryInfo != null && projectDirectoryInfo.Exists)
+            {
+                string filePathToWrite = Path.Combine(projectDirectoryInfo.FullName, "pythonDLLfilePath.txt");
+
+                if (File.Exists(filePathToWrite))
+                {
+                    File.WriteAllText(filePathToWrite, filePath);
+                }
+                else
+                {
+                    using (var fileStream = File.Create(filePathToWrite))
+                    {
+                        fileStream.Close();
+                    }
+
+                    File.WriteAllText(filePathToWrite, filePath);
+                }
+            }
+            else
+            {
+                throw new DirectoryNotFoundException("Nie można znaleźć katalogu projektu.");
+            }
+        }
+
+        public void ClearFilePythonDDl()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+
+            if (projectDirectoryInfo != null && projectDirectoryInfo.Exists)
+            {
+                string fileToClearPath = Path.Combine(projectDirectoryInfo.FullName, "pythonDLLfilePath.txt");
+
+                if (File.Exists(fileToClearPath))
+                {
+                    File.WriteAllText(fileToClearPath, string.Empty);
+                }
+                
+            }
+            
+        }
 
     }
-
 }
 
 

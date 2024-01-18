@@ -25,7 +25,18 @@ namespace DjProgram1.Model.Services
         private TextBlock actualTime;
         private double firstBeatTimeStamp;
         private double beatInterval;
+        private string filePathPythonDDL;
+        FileService fileService;
+        //= @"C:\Program Files\Python311\python311.dll";
 
+        public MusicService(string filePath, FileService fileService)
+        {
+            this.filePathPythonDDL = @filePath;
+            this.fileService = fileService;
+        }
+        public MusicService()
+        {
+        }
 
         public List<double> GenerateWaveformData(string filePath)
         {
@@ -187,7 +198,7 @@ namespace DjProgram1.Model.Services
 
             string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "Model", "Services");
 
-            Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
+            Runtime.PythonDLL = @filePathPythonDDL;
 
             PythonEngine.Initialize();
 
@@ -206,6 +217,19 @@ namespace DjProgram1.Model.Services
                 catch (Exception ex)
                 {
                     result = "An error occurred: " + ex.Message;
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBoxResult result1 = MessageBox.Show(
+                        "Nieprawidlowa biblioteka ddl error: " + ex,
+                        "Potwierdzenie",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+
+                        fileService.ClearFilePythonDDl();
+                        
+                        return;
+                    });
                 }
             }
             PythonEngine.Shutdown();
@@ -224,7 +248,7 @@ namespace DjProgram1.Model.Services
 
             string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "Model", "Services");
 
-            Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
+            Runtime.PythonDLL = @filePathPythonDDL;
 
             PythonEngine.Initialize();
 
@@ -246,6 +270,18 @@ namespace DjProgram1.Model.Services
                 catch (Exception ex)
                 {
                     newFilePath = "An error occurred: " + ex.Message;
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBoxResult result1 = MessageBox.Show(
+                        "Nieprawidlowa biblioteka ddl error: " + ex,
+                        "Potwierdzenie",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+
+                        fileService.ClearFilePythonDDl();
+                        return;
+                    });
                 }
             }
             PythonEngine.Shutdown();
@@ -261,7 +297,7 @@ namespace DjProgram1.Model.Services
 
             string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "Model", "Services");
 
-            Runtime.PythonDLL = @"C:\Program Files\Python311\python311.dll";
+            Runtime.PythonDLL = @filePathPythonDDL;
             PythonEngine.Initialize();
             List<double> timeStamps = new List<double>();
 
@@ -277,6 +313,18 @@ namespace DjProgram1.Model.Services
                 }
                 catch (Exception ex)
                 {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBoxResult result1 = MessageBox.Show(
+                        "Nieprawidlowa biblioteka ddl error: " + ex,
+                        "Potwierdzenie",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+
+                        fileService.ClearFilePythonDDl();
+                        return;
+                    });
                 }
             }
             PythonEngine.Shutdown();

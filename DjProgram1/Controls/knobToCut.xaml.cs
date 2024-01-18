@@ -27,7 +27,7 @@ namespace DjProgram1.Controls
         private bool isKnobLocked = false;
         private bool isDragging = false;
         private Point lastMousePosition;
-        private MusicService musicService = new MusicService();
+        private MusicService musicService;
         private Canvas waveFormCanvas;
         private Rectangle progressIndicator;
 
@@ -51,8 +51,9 @@ namespace DjProgram1.Controls
             DrawDots();
         }
 
-        public void Initialize(Canvas waveFormCanvas, Rectangle progressIndicator, TextBlock textBlock)
+        public void Initialize(MusicService musicService,Canvas waveFormCanvas, Rectangle progressIndicator, TextBlock textBlock)
         {
+            this.musicService = musicService;
             this.progressIndicator = progressIndicator;
             this.waveFormCanvas = waveFormCanvas;
             this.textBLock = textBlock;

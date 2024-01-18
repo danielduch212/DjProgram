@@ -17,9 +17,8 @@ namespace DjProgram1.Model.Services
     internal class ViewModelService
     {
 
-        MusicService musicService = new MusicService();
 
-
+        MusicService musicService;
         AudioFile currentAudioFile = new AudioFile();
 
         FileService fileService;
@@ -117,8 +116,10 @@ namespace DjProgram1.Model.Services
 
         RotateTransform rotateTransformCD;
 
-        public ViewModelService(DjProgram1.Model.Model model, FileService fileService, ListBox songList, Canvas canvas, KnobToCut knobToCut, Knob knob, TextBlock bpmTextBox, TextBlock songOnDeck, TextBlock actualTime, TextBlock durationTime, RotateTransform rotateTransformLoading, RotateTransform rotateTransformCD, Image imageLoading, TextBlock readyText, Slider volumeSlider, Synchronizer synchronizer)
+        public ViewModelService(DjProgram1.Model.Model model, FileService fileService, MusicService musicService,ListBox songList, Canvas canvas, KnobToCut knobToCut, Knob knob, TextBlock bpmTextBox, TextBlock songOnDeck, TextBlock actualTime, TextBlock durationTime, RotateTransform rotateTransformLoading, RotateTransform rotateTransformCD, Image imageLoading, TextBlock readyText, Slider volumeSlider, Synchronizer synchronizer)
         {
+            this.musicService = musicService;
+
             this.songList = songList;
             this.canvas = canvas;
             this.knobToCut = knobToCut;
@@ -137,7 +138,6 @@ namespace DjProgram1.Model.Services
             this.model = model;
 
             this.synchronizer = synchronizer;
-
 
             this.fileService = fileService;
             threadsService = new ThreadsService(musicService, fileService);
