@@ -20,7 +20,7 @@ namespace DjProgram1.Controls
         private double centerY = 35;
         private bool isKnobLocked = false;
 
-        public TextBox bpmTextBox { get; set; }
+        public TextBlock bpmTextBox { get; set; }
 
         private MusicService musicService = new MusicService();
         double bpmValue = 0;

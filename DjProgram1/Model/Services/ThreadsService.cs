@@ -66,7 +66,7 @@ namespace DjProgram1.Model.Services
             }
         }
 
-        public async Task<List<double>> generateWaveFormData(string filePath)
+        public async Task<List<double>> GenerateWaveFormData(string filePath)
         {
             var data = new List<double>();
 
@@ -80,7 +80,7 @@ namespace DjProgram1.Model.Services
 
         }
 
-        public async Task<List<double>> generateTimeStamps(string filePath)
+        public async Task<List<double>> GenerateTimeStamps(string filePath)
         {
 
             var dataTimeStamps = new List<double>();
@@ -88,7 +88,7 @@ namespace DjProgram1.Model.Services
             await Task.Run(() =>
             {
 
-                dataTimeStamps = musicService.returnTimeStampsPYTHON(filePath);
+                dataTimeStamps = musicService.ReturnTimeStampsPYTHON(filePath);
 
             });
             return dataTimeStamps;
@@ -120,13 +120,13 @@ namespace DjProgram1.Model.Services
 
 
 
-        public async Task CountBPM(string filePath, System.Windows.Controls.TextBox textBox, CancellationToken cancellationToken)
+        public async Task CountBPM(string filePath, System.Windows.Controls.TextBlock textBox, CancellationToken cancellationToken)
         {
             try
             {
                 await Task.Run(() =>
                 {
-                    var result = musicService.calculateBPMPython(filePath);
+                    var result = musicService.CalculateBPMPython(filePath);
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         textBox.Text = "BPM: " + result;
@@ -159,7 +159,7 @@ namespace DjProgram1.Model.Services
             }
         }
 
-        public async Task<string> changeBPM(string filePath, double originalBPM, double newBPM, CancellationToken cancellationToken)
+        public async Task<string> ChangeBPM(string filePath, double originalBPM, double newBPM, CancellationToken cancellationToken)
         {
             string newFilePath = "";
             try
@@ -167,7 +167,7 @@ namespace DjProgram1.Model.Services
 
                 newFilePath = await Task.Run(() =>
                  {
-                     return musicService.changeBPM(filePath, originalBPM, newBPM);
+                     return musicService.ChangeBPM(filePath, originalBPM, newBPM);
                  }, cancellationToken);
 
 
@@ -180,7 +180,7 @@ namespace DjProgram1.Model.Services
             return newFilePath;
         }
 
-        public async Task deleteCopiedTrack(string name)
+        public async Task DeleteCopiedTrack(string name)
         {
             string filePath = "";
             try
@@ -206,7 +206,7 @@ namespace DjProgram1.Model.Services
             }
 
         }
-        public async Task deleteCopies()
+        public async Task DeleteCopies()
         {
             try
             {
@@ -221,7 +221,7 @@ namespace DjProgram1.Model.Services
             }
         }
 
-        public async Task refreshList(ListBox lisbox, List<AudioFile> audioFiles)
+        public async Task RefreshList(ListBox lisbox, List<AudioFile> audioFiles)
         {
             try
             {

@@ -59,7 +59,7 @@ namespace DjProgram1.Model.Services
             {
                 waveformCanvas.Children.Clear();
                 double canvasWidth = waveformCanvas.ActualWidth;
-                double canvasHeight = waveformCanvas.ActualHeight - 30;
+                double canvasHeight = waveformCanvas.ActualHeight - 20;
                 int samplesToDisplay = displaySeconds * 2;
                 double barWidth = canvasWidth / samplesToDisplay;
                 double sampleDuration = displaySeconds / (double)samplesToDisplay;
@@ -77,12 +77,12 @@ namespace DjProgram1.Model.Services
                     };
 
                     Canvas.SetLeft(rect, i * barWidth);
-                    Canvas.SetTop(rect, (canvasHeight - sampleHeight) / 2);
+                    Canvas.SetTop(rect, ((canvasHeight - sampleHeight) / 2)+10);
                     waveformCanvas.Children.Add(rect);
                 }
 
                 List<double> beatIntervals = new List<double>();
-                double interval = getInterval(timeStamps);
+                double interval = GetInterval(timeStamps);
                 if (interval > 0)
                 {
                     double lastTimeStamp = timeStamps.Last();
@@ -104,7 +104,7 @@ namespace DjProgram1.Model.Services
                     Rectangle timeMarkerRect = new Rectangle
                     {
                         Width = 2,
-                        Height = canvasHeight,
+                        Height = waveformCanvas.ActualHeight,
                         Fill = Brushes.DarkGray,
                     };
                     Canvas.SetLeft(timeMarkerRect, linePosition);
@@ -119,28 +119,45 @@ namespace DjProgram1.Model.Services
         public double[] LoadAudioSamples(string filePath)
         {
             List<double> samples = new List<double>();
-
-            using (var reader = new AudioFileReader(filePath))
+            try
             {
-                var buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
-                int bytesRead;
-
-                while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+                using (var reader = new AudioFileReader(filePath))
                 {
-                    for (int i = 0; i < bytesRead / reader.WaveFormat.Channels; i++)
+                    var buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
+                    int bytesRead;
+
+                    while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
                     {
-                        for (int channel = 0; channel < reader.WaveFormat.Channels; channel++)
+                        for (int i = 0; i < bytesRead / reader.WaveFormat.Channels; i++)
                         {
-                            samples.Add(buffer[i * reader.WaveFormat.Channels + channel]);
+                            for (int channel = 0; channel < reader.WaveFormat.Channels; channel++)
+                            {
+                                samples.Add(buffer[i * reader.WaveFormat.Channels + channel]);
+                            }
                         }
                     }
                 }
-            }
 
+                
+                return samples.ToArray();
+            }
+            catch(Exception ex)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBoxResult result1 = MessageBox.Show(
+                    "Nieprawidlowy plik",
+                    "Potwierdzenie",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                    return samples.ToArray();
+                });
+            }
             return samples.ToArray();
         }
 
-        public void animatePhoto(RotateTransform rotateTransform)
+        public void AnimatePhoto(RotateTransform rotateTransform)
         {
 
 
@@ -160,7 +177,7 @@ namespace DjProgram1.Model.Services
             rotateTransform.Angle = 10;
         }
 
-        public string calculateBPMPython(string filePath)
+        public string CalculateBPMPython(string filePath)
         {
             string result = "";
 
@@ -196,7 +213,7 @@ namespace DjProgram1.Model.Services
         }
 
 
-        public string changeBPM(string filePath, double oldBPM, double newBPM)
+        public string ChangeBPM(string filePath, double oldBPM, double newBPM)
         {
 
             string newFilePath = "";
@@ -235,7 +252,7 @@ namespace DjProgram1.Model.Services
             return newFilePath;
         }
 
-        public List<double> returnTimeStampsPYTHON(string filePath)
+        public List<double> ReturnTimeStampsPYTHON(string filePath)
         {
 
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -265,7 +282,7 @@ namespace DjProgram1.Model.Services
             PythonEngine.Shutdown();
             return timeStamps;
         }
-        public double getInterval(List<double> timeStamps)
+        public double GetInterval(List<double> timeStamps)
         {
 
             if (timeStamps.Count >= 4)
@@ -308,7 +325,7 @@ namespace DjProgram1.Model.Services
         {
             int samplesToDisplay = 30 * 2;
             double canvasWidth = waveformCanvas.ActualWidth;
-            double canvasHeight = waveformCanvas.ActualHeight - 30;
+            double canvasHeight = waveformCanvas.ActualHeight-20;
             double halfCanvasWidth = canvasWidth * 0.5;
             double barWidth = canvasWidth / samplesToDisplay;
             double adjustedDuration = Math.Min(30, totalDuration);
@@ -335,7 +352,7 @@ namespace DjProgram1.Model.Services
 
                 double rectPosition = shouldMove ? i * barWidth : (startSampleIndex + i) * barWidth;
                 Canvas.SetLeft(rect, rectPosition);
-                Canvas.SetTop(rect, (canvasHeight - sampleHeight) / 2);
+                Canvas.SetTop(rect, ((canvasHeight - sampleHeight) / 2) + 10);
                 waveformCanvas.Children.Add(rect);
 
 
@@ -343,7 +360,7 @@ namespace DjProgram1.Model.Services
             Rectangle progressIndicator = new Rectangle
             {
                 Width = 2,
-                Height = canvasHeight,
+                Height = waveformCanvas.ActualHeight,
                 Fill = Brushes.MediumVioletRed
             };
             Canvas.SetLeft(progressIndicator, indicatorPosition);
@@ -358,7 +375,7 @@ namespace DjProgram1.Model.Services
 
             int samplesToDisplay = 30 * 2;
             double canvasWidth = waveformCanvas.ActualWidth;
-            double canvasHeight = waveformCanvas.ActualHeight - 30;
+            double canvasHeight = waveformCanvas.ActualHeight-20;
             double halfCanvasWidth = canvasWidth * 0.5;
             double barWidth = canvasWidth / samplesToDisplay;
             double adjustedDuration = Math.Min(30, totalDuration);
@@ -390,7 +407,7 @@ namespace DjProgram1.Model.Services
 
                 double rectPosition = shouldMove ? (i * barWidth) : ((startSampleIndex + i) * barWidth);
                 Canvas.SetLeft(rect, rectPosition);
-                Canvas.SetTop(rect, (canvasHeight - sampleHeight) / 2);
+                Canvas.SetTop(rect, ((canvasHeight - sampleHeight) / 2) + 10);
                 waveformCanvas.Children.Add(rect);
             }
 
@@ -406,7 +423,7 @@ namespace DjProgram1.Model.Services
                 Rectangle timeMarkerRect = new Rectangle
                 {
                     Width = 2,
-                    Height = canvasHeight,
+                    Height = waveformCanvas.ActualHeight,
                     Fill = Brushes.DarkGray,
                 };
                 Canvas.SetLeft(timeMarkerRect, linePosition);
@@ -418,7 +435,7 @@ namespace DjProgram1.Model.Services
             Rectangle progressIndicator = new Rectangle
             {
                 Width = 2,
-                Height = canvasHeight,
+                Height = waveformCanvas.ActualHeight,
                 Fill = Brushes.Red
             };
             Canvas.SetLeft(progressIndicator, indicatorPosition);

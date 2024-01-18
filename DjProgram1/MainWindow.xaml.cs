@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace DjProgram1
 {
@@ -49,6 +50,7 @@ namespace DjProgram1
             knobToCut2.Initialize(canvas2, musicService2.progressIndicator, actualTime2);
             this.Closing += MainWindow_Closing;
 
+            fileService.InitializeControls(playButtonImage1,pauseButtonImage1,stopButtonImage1,image1,imageLoading1,playButtonImage2,pauseButtonImage2,stopButtonImage2,image2,imageLoading2);
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -59,6 +61,7 @@ namespace DjProgram1
                 fileService.DeleteAllCopies();
             }
         }
+        
 
         private async void buttonUpload2_Click(object sender, RoutedEventArgs e)
         {
@@ -224,46 +227,14 @@ namespace DjProgram1
 
         private void textChangedBPMTextBox1(object sender, RoutedEventArgs e)
         {
-            string newBpm = bpmTextBox1.Text;
-
-            if (!newBpm.StartsWith("BPM: "))
-            {
-                bpmTextBox1.Text = "BPM: " + newBpm;
-            }
+            
         }
 
         private void textChangedBPMTextBox2(object sender, RoutedEventArgs e)
         {
-            string newBpm = bpmTextBox2.Text;
-
-            if (!newBpm.StartsWith("BPM: "))
-            {
-                bpmTextBox2.Text = "BPM: " + newBpm;
-            }
+            
         }
-        private void TextBlock_SizeChanged(object sender, RoutedEventArgs e)
-        {
-            TextBlock textBlock = sender as TextBlock;
-            if (textBlock != null)
-            {
-                var border = textBlock.Parent as Border;
-                if (border != null && textBlock.ActualWidth > border.ActualWidth)
-                {
-                    var animation = new DoubleAnimation
-                    {
-                        From = border.ActualWidth,
-                        To = -textBlock.ActualWidth,
-                        Duration = new Duration(TimeSpan.FromSeconds(10)),
-                        RepeatBehavior = RepeatBehavior.Forever,
-                        AutoReverse = true
-                    };
-
-                    TranslateTransform transform = new TranslateTransform();
-                    textBlock.RenderTransform = transform;
-                    transform.BeginAnimation(TranslateTransform.XProperty, animation);
-                }
-            }
-        }
+        
 
 
 

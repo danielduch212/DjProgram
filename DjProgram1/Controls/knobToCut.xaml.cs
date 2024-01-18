@@ -71,7 +71,7 @@ namespace DjProgram1.Controls
         public List<double> GenerateBeatIntervals(List<double> timeStamps, double totalDuration)
         {
             List<double> beatIntervals = new List<double>();
-            double interval = musicService.getInterval(timeStamps);
+            double interval = musicService.GetInterval(timeStamps);
             if (interval > 0)
             {
                 for (double beat = timeStamps[0]; beat <= totalDuration; beat += interval)

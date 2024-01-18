@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using VisioForge.Libs.ZXing;
 
 namespace DjProgram1.Model.Services
 {
@@ -105,7 +106,7 @@ namespace DjProgram1.Model.Services
         private Canvas canvas;
         private KnobToCut knobToCut;
         private Knob knob;
-        private TextBox bpmTextBox;
+        private TextBlock bpmTextBox;
         private TextBlock songOnDeck;
         private TextBlock actualTime;
         private TextBlock durationTime;
@@ -116,7 +117,7 @@ namespace DjProgram1.Model.Services
 
         RotateTransform rotateTransformCD;
 
-        public ViewModelService(DjProgram1.Model.Model model, FileService fileService, ListBox songList, Canvas canvas, KnobToCut knobToCut, Knob knob, TextBox bpmTextBox, TextBlock songOnDeck, TextBlock actualTime, TextBlock durationTime, RotateTransform rotateTransformLoading, RotateTransform rotateTransformCD, Image imageLoading, TextBlock readyText, Slider volumeSlider, Synchronizer synchronizer)
+        public ViewModelService(DjProgram1.Model.Model model, FileService fileService, ListBox songList, Canvas canvas, KnobToCut knobToCut, Knob knob, TextBlock bpmTextBox, TextBlock songOnDeck, TextBlock actualTime, TextBlock durationTime, RotateTransform rotateTransformLoading, RotateTransform rotateTransformCD, Image imageLoading, TextBlock readyText, Slider volumeSlider, Synchronizer synchronizer)
         {
             this.songList = songList;
             this.canvas = canvas;
@@ -190,7 +191,7 @@ namespace DjProgram1.Model.Services
                     synchronizer.pythonEngineIsRunning = true;
 
                     imageLoading.Visibility = Visibility.Visible;
-                    musicService.animatePhoto(rotateTransformLoading);
+                    musicService.AnimatePhoto(rotateTransformLoading);
 
                     readyText.Text = "NOT READY";
                     readyText.Foreground = Brushes.Red;
@@ -201,7 +202,6 @@ namespace DjProgram1.Model.Services
                     songOnDeck.Text = currentAudioFile.FileName;
 
 
-                    bpmTextBox.IsReadOnly = false;
 
                     bpmTextBox.Text = "BPM: ";
 
@@ -209,8 +209,37 @@ namespace DjProgram1.Model.Services
                     audioLoadingTask = threadsService.LoadAudioAsync(currentAudioFile.FilePath, ctsAudioLoadingTask.Token);
                     await audioLoadingTask;
 
-                    audioFileReader = new AudioFileReader(currentAudioFile.FilePath);
+                    try
+                    {
+                        audioFileReader = new AudioFileReader(currentAudioFile.FilePath);
 
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBoxResult result1 = MessageBox.Show(
+                            "Nieprawidlowy plik",
+                            "Potwierdzenie",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                        musicService.StopRotation(rotateTransformLoading);
+
+                        return;
+                    }
+                    if(audioFileReader.TotalTime.TotalSeconds == 0 ||audioFileReader.TotalTime.TotalSeconds<1|| audioFileReader.TotalTime.TotalSeconds == null)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            MessageBoxResult result1 = MessageBox.Show(
+                            "Nieprawidlowy plik",
+                            "Potwierdzenie",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                            musicService.StopRotation(rotateTransformLoading);
+
+                            return;
+                        });
+                        
+                    }
 
                     ctsCountBPM = new CancellationTokenSource();
 
@@ -223,7 +252,7 @@ namespace DjProgram1.Model.Services
                         textBPM = textBPM.Replace("BPM: ", "").Trim();
                         double.TryParse(textBPM, out double countedBPM);
                         currentAudioFile.BPM = countedBPM;
-                        refreshListBoxTask = threadsService.refreshList(songList, model.GetAudioFiles());
+                        refreshListBoxTask = threadsService.RefreshList(songList, model.GetAudioFiles());
 
                     }
                     else
@@ -231,12 +260,11 @@ namespace DjProgram1.Model.Services
                         bpmTextBox.Text = "BPM: " + currentAudioFile.BPM.ToString();
                     }
 
-                    knob.UnlockKnobRotation();
 
 
 
-                    waveFormData = await threadsService.generateWaveFormData(currentAudioFile.FilePath);
-                    timeStampsData = await threadsService.generateTimeStamps(currentAudioFile.FilePath);
+                    waveFormData = await threadsService.GenerateWaveFormData(currentAudioFile.FilePath);
+                    timeStampsData = await threadsService.GenerateTimeStamps(currentAudioFile.FilePath);
 
                     generateWaveformTask = threadsService.GenerateInitialWaveForm(waveFormData, timeStampsData, canvas);
                     await generateWaveformTask;
@@ -270,6 +298,8 @@ namespace DjProgram1.Model.Services
                     musicService.StopRotation(rotateTransformLoading);
                     imageLoading.Visibility = Visibility.Hidden;
                     knobToCut.UnlockKnobRotation();
+                    knob.UnlockKnobRotation();
+
 
                     synchronizer.uploadTrackFinished = true;
                 }
@@ -282,7 +312,7 @@ namespace DjProgram1.Model.Services
             {
                 if (changedSongFilePath != currentAudioFile.FilePath && ready)
                 {
-                    knobToCut.LockKnobRotation();
+                    knob.LockKnobRotation();
 
                     ctsMoveLineWaveForm = new CancellationTokenSource();
 
@@ -302,14 +332,12 @@ namespace DjProgram1.Model.Services
 
                     moveLineWaveForm = threadsService.UpdateWaveformAsync(canvas, audioFileReader, waveFormData, timeStampsData, audioFileReader.TotalTime.TotalSeconds, ctsMoveLineWaveForm.Token);
 
-                    musicService.animatePhoto(rotateTransformCD);
+                    musicService.AnimatePhoto(rotateTransformCD);
                 }
                 else if (changedSongFilePath == currentAudioFile.FilePath && ready)
                 {
                     knob.LockKnobRotation();
-                    knobToCut.LockKnobRotation();
 
-                    bpmTextBox.IsReadOnly = true;
                     string text = bpmTextBox.Text;
                     text = text.Replace("BPM: ", "").Trim();
                     double newBPM = double.Parse(text);
@@ -334,7 +362,7 @@ namespace DjProgram1.Model.Services
                     waveOut.Play();
                     moveLineWaveForm = threadsService.UpdateWaveformAsync(canvas, audioFileReader, waveFormData, timeStampsData, audioFileReader.TotalTime.TotalSeconds, ctsMoveLineWaveForm.Token);
 
-                    musicService.animatePhoto(rotateTransformCD);
+                    musicService.AnimatePhoto(rotateTransformCD);
                 }
             }
             else if (waveOut != null && waveOut.PlaybackState == PlaybackState.Paused)
@@ -344,7 +372,7 @@ namespace DjProgram1.Model.Services
                 ctsMoveLineWaveForm = new CancellationTokenSource();
                 moveLineWaveForm = threadsService.UpdateWaveformAsync(canvas, audioFileReader, waveFormData, timeStampsData, audioFileReader.TotalTime.TotalSeconds, ctsMoveLineWaveForm.Token);
 
-                musicService.animatePhoto(rotateTransformCD);
+                musicService.AnimatePhoto(rotateTransformCD);
                 waveOutPlaying = true;
             }
             else if (waveOut != null && waveOut.PlaybackState == PlaybackState.Stopped)
@@ -358,13 +386,15 @@ namespace DjProgram1.Model.Services
                 ctsMoveLineWaveForm = new CancellationTokenSource();
                 moveLineWaveForm = threadsService.UpdateWaveformAsync(canvas, audioFileReader, waveFormData, timeStampsData, audioFileReader.TotalTime.TotalSeconds, ctsMoveLineWaveForm.Token);
 
-                musicService.animatePhoto(rotateTransformCD);
+                musicService.AnimatePhoto(rotateTransformCD);
                 waveOutPlaying = true;
             }
         }
 
         public async void PauseTrack()
         {
+            musicService.StopRotation(rotateTransformCD);
+
             if (waveOut != null && waveOut.PlaybackState == PlaybackState.Playing)
             {
                 if (ctsMoveLineWaveForm != null)
@@ -378,6 +408,8 @@ namespace DjProgram1.Model.Services
 
         public async void StopTrack()
         {
+            musicService.StopRotation(rotateTransformCD);
+
             if (waveOut != null && (waveOut.PlaybackState == PlaybackState.Playing || waveOut.PlaybackState == PlaybackState.Paused))
             {
                 actualTime.Text = "00:00";
@@ -427,9 +459,9 @@ namespace DjProgram1.Model.Services
 
         }
 
-        public async void SynchronizeTrack(TextBox oppositeBpmTextBox)
+        public async void SynchronizeTrack(TextBlock oppositeBpmTextBox)
         {
-            if (ready && oppositeBpmTextBox.Text != "BPM: " && bpmTextBox.IsReadOnly == false && !synchronizer.pythonEngineIsRunning)
+            if (ready && oppositeBpmTextBox.Text != "BPM: " &&  !synchronizer.pythonEngineIsRunning)
             {
                 knob.LockKnobRotation();
                 knobToCut.LockKnobRotation();
@@ -441,19 +473,20 @@ namespace DjProgram1.Model.Services
                 if (newBPM != currentAudioFile.BPM)
                 {
                     ready = false;
+                    readyText.Text = "NOT READY";
                     readyText.Foreground = Brushes.Red;
-                    deleteTrack = threadsService.deleteCopiedTrack(currentAudioFile.FileName);
+                    deleteTrack = threadsService.DeleteCopiedTrack(currentAudioFile.FileName);
                     await deleteTrack;
-                    deleteOldCopies = threadsService.deleteCopies();
+                    deleteOldCopies = threadsService.DeleteCopies();
 
                     ctsChangeBPM = new CancellationTokenSource();
 
                     synchronizer.pythonEngineIsRunning = true;
                     changedSongFilePath = "";
-                    changedSongFilePath = await threadsService.changeBPM(currentAudioFile.FilePath, (double)currentAudioFile.BPM, newBPM, ctsChangeBPM.Token);
+                    changedSongFilePath = await threadsService.ChangeBPM(currentAudioFile.FilePath, (double)currentAudioFile.BPM, newBPM, ctsChangeBPM.Token);
 
-                    waveFormData = await threadsService.generateWaveFormData(changedSongFilePath);
-                    timeStampsData = await threadsService.generateTimeStamps(changedSongFilePath);
+                    waveFormData = await threadsService.GenerateWaveFormData(changedSongFilePath);
+                    timeStampsData = await threadsService.GenerateTimeStamps(changedSongFilePath);
 
                     generateWaveformTask = threadsService.GenerateInitialWaveForm(waveFormData, timeStampsData, canvas);
                     await generateWaveformTask;
@@ -464,7 +497,9 @@ namespace DjProgram1.Model.Services
                     synchronizer.pythonEngineIsRunning = false;
 
                     readyText.Foreground = Brushes.Green;
-                    bpmTextBox.IsReadOnly = true;
+                    readyText.Text = "READY";
+
+                    //bpmTextBox.IsReadOnly = true;
                     knobToCut.SetProgressIndicatorToStart();
 
                     double audioDuration = audioFileReader.TotalTime.TotalSeconds;
@@ -484,10 +519,7 @@ namespace DjProgram1.Model.Services
             {
                 return;
             }
-            if (bpmTextBox.IsReadOnly == true)
-            {
-                return;
-            }
+            
             ready = false;
             knobToCut.LockKnobRotation();
             knob.LockKnobRotation();
@@ -497,21 +529,21 @@ namespace DjProgram1.Model.Services
             double newBPM = double.Parse(text);
             if (newBPM != currentAudioFile.BPM && synchronizer.pythonEngineIsRunning == false)
             {
-
+                readyText.Text = "NOT READY";
                 readyText.Foreground = Brushes.Red;
-                deleteTrack = threadsService.deleteCopiedTrack(currentAudioFile.FileName);
+                deleteTrack = threadsService.DeleteCopiedTrack(currentAudioFile.FileName);
                 await deleteTrack;
-                deleteOldCopies = threadsService.deleteCopies();
+                deleteOldCopies = threadsService.DeleteCopies();
 
                 ctsChangeBPM = new CancellationTokenSource();
 
                 synchronizer.pythonEngineIsRunning = true;
                 changedSongFilePath = "";
 
-                changedSongFilePath = await threadsService.changeBPM(currentAudioFile.FilePath, (double)currentAudioFile.BPM, newBPM, ctsChangeBPM.Token);
+                changedSongFilePath = await threadsService.ChangeBPM(currentAudioFile.FilePath, (double)currentAudioFile.BPM, newBPM, ctsChangeBPM.Token);
 
-                waveFormData = await threadsService.generateWaveFormData(changedSongFilePath);
-                timeStampsData = await threadsService.generateTimeStamps(changedSongFilePath);
+                waveFormData = await threadsService.GenerateWaveFormData(changedSongFilePath);
+                timeStampsData = await threadsService.GenerateTimeStamps(changedSongFilePath);
 
                 generateWaveformTask = threadsService.GenerateInitialWaveForm(waveFormData, timeStampsData, canvas);
                 await generateWaveformTask;
@@ -522,16 +554,24 @@ namespace DjProgram1.Model.Services
                 synchronizer.pythonEngineIsRunning = false;
 
                 readyText.Foreground = Brushes.Green;
-                bpmTextBox.IsReadOnly = true;
+                readyText.Text = "READY";
+
+                //bpmTextBox.IsReadOnly = true;
                 knobToCut.SetProgressIndicatorToStart();
                 actualTime.Text = "00:00";
 
                 double audioDuration = audioFileReader.TotalTime.TotalSeconds;
                 TimeSpan audioDurationTimeSpan = TimeSpan.FromSeconds(audioDuration);
                 durationTime.Text = audioDurationTimeSpan.ToString(@"mm\:ss");
+                knobToCut.UnlockKnobRotation();
+                ready = true;
+
+
             }
-            ready = true;
-            knobToCut.UnlockKnobRotation();
+            else
+            {
+                knob.UnlockKnobRotation();
+            }
 
         }
 

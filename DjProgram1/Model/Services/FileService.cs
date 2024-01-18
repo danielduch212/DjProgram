@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using ListBox = System.Windows.Controls.ListBox;
 
 namespace DjProgram1.Model.Services
@@ -350,7 +351,64 @@ namespace DjProgram1.Model.Services
                 return listBoxItem;
             }) as ListBoxItem;
         }
+        public string findControlsFilePath(string name)
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
+            DirectoryInfo projectDirectoryInfo = Directory.GetParent(baseDirectory).Parent.Parent.Parent;
+
+            string servicesPath = Path.Combine(projectDirectoryInfo.FullName, "controlsImages");
+
+            DirectoryInfo dirInfo = new DirectoryInfo(servicesPath);
+            FileInfo[] files = dirInfo.GetFiles(name + ".*", SearchOption.AllDirectories);
+
+            if (files.Length > 0)
+            {
+                return files[0].FullName;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+
+        public void InitializeControls(Image playButtonImage1, Image pauseButtonImage1, Image stopButtonImage1, Image image1, Image imageLoading1, Image playButtonImage2, Image pauseButtonImage2, Image stopButtonImage2, Image image2, Image imageLoading2)
+        {
+            string filepath = findControlsFilePath("play");
+            BitmapImage bitmapImage = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            playButtonImage1.Source = bitmapImage;
+            filepath = findControlsFilePath("pause");
+            BitmapImage bitmapImage1 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            pauseButtonImage1.Source = bitmapImage1;
+            filepath = findControlsFilePath("stop");
+            BitmapImage bitmapImage2 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            stopButtonImage1.Source = bitmapImage2;
+            filepath = findControlsFilePath("cd");
+            BitmapImage bitmapImage3 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            image1.Source = bitmapImage3;
+            filepath = findControlsFilePath("loading");
+            BitmapImage bitmapImage4 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            imageLoading1.Source = bitmapImage4;
+
+            filepath = findControlsFilePath("play");
+            BitmapImage bitmapImage5 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            playButtonImage2.Source = bitmapImage5;
+            filepath = findControlsFilePath("pause");
+            BitmapImage bitmapImage6 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            pauseButtonImage2.Source = bitmapImage6;
+            filepath = findControlsFilePath("stop");
+            BitmapImage bitmapImage7 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            stopButtonImage2.Source = bitmapImage7;
+            filepath = findControlsFilePath("cd");
+            BitmapImage bitmapImage8 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            image2.Source = bitmapImage8;
+            filepath = findControlsFilePath("loading");
+            BitmapImage bitmapImage9 = new BitmapImage(new Uri(filepath, UriKind.Absolute));
+            imageLoading2.Source = bitmapImage9;
+
+
+        }
 
 
 
