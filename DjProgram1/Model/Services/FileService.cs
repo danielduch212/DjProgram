@@ -424,41 +424,45 @@ namespace DjProgram1.Model.Services
             {
                 string filePath = files[0].FullName;
                 string fileContent = File.ReadAllText(filePath);
-                return fileContent;
-            }
-            else
-            {
-                MessageBoxResult result1 = MessageBox.Show(
-                            "Podaj folder zawierający bibliotekę pythonDLL 311",
-                            "Potwierdzenie",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
-
-                while (true) 
+                if (!string.IsNullOrEmpty(fileContent))
                 {
-                    var dialog = new System.Windows.Forms.FolderBrowserDialog();
-                    System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+                    return fileContent;
+                }
+            }
 
-                    if (result == System.Windows.Forms.DialogResult.OK)
+            while (true)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBoxResult result1 = MessageBox.Show(
+                        "Podaj folder zawierający bibliotekę pythonDLL 311",
+                        "Informacja",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                });
+
+                string selectedFilePath = null;
+                var dialog = new System.Windows.Forms.FolderBrowserDialog();
+                System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+
+                if (result == System.Windows.Forms.DialogResult.OK)
+                {
+                    string folderPath = dialog.SelectedPath;
+                    files = new DirectoryInfo(folderPath).GetFiles("python311.dll", SearchOption.TopDirectoryOnly);
+                    if (files.Length > 0)
                     {
-                        string folderPath = dialog.SelectedPath;
-                        files = new DirectoryInfo(folderPath).GetFiles("python311.dll", SearchOption.TopDirectoryOnly);
-                        if (files.Length > 0)
-                        {
-                            WritePythonDDLFilePath(files[0].FullName);
-                            return files[0].FullName;
-
-                        }
-                        else
-                        {
-                            MessageBox.Show("Nie znaleziono biblioteki python311.dll w podanym folderze. Spróbuj ponownie.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
+                        WritePythonDDLFilePath(files[0].FullName);
+                        return files[0].FullName;
                     }
                     else
                     {
-                        return null; 
+                        MessageBox.Show("Nie znaleziono biblioteki python311.dll w podanym folderze. Spróbuj ponownie.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
+
+
+
+
             }
         }
 

@@ -499,7 +499,6 @@ namespace DjProgram1.Model.Services
                     readyText.Foreground = Brushes.Green;
                     readyText.Text = "READY";
 
-                    //bpmTextBox.IsReadOnly = true;
                     knobToCut.SetProgressIndicatorToStart();
 
                     double audioDuration = audioFileReader.TotalTime.TotalSeconds;
@@ -556,7 +555,6 @@ namespace DjProgram1.Model.Services
                 readyText.Foreground = Brushes.Green;
                 readyText.Text = "READY";
 
-                //bpmTextBox.IsReadOnly = true;
                 knobToCut.SetProgressIndicatorToStart();
                 actualTime.Text = "00:00";
 
@@ -592,7 +590,6 @@ namespace DjProgram1.Model.Services
 
         }
 
-        //wykrywanie zlych plikow
 
 
     }
